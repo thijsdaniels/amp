@@ -1,0 +1,76 @@
+# This file documents the Firestore database schema for the Vim Reboot app.
+# All user-owned data is stored under a single user document. Products and recipes
+# are versioned to ensure historical data integrity. Timeline entries can be
+# defined recursively for grouping purposes, while still allowing the entire
+# timeline for a particular day to be fetched in a single query. All top-level
+# models contain base fields like `createdBy` and `updatedAt`.
+
+collections:
+  users: # Root document for a single user's data. All other user-specific collections are nested under this.
+    fields:
+      # User-specific fields would go here, e.g., name, settings, etc.
+      # For now, this document primarily serves as a container for subcollections.
+
+    collections:
+      products: # A conceptual product created by a user, like 'Apple'.
+        fields:
+          createdBy: string # The userId of the user who created this product.
+          createdAt: timestamp # When the product was first created.
+          updatedAt: timestamp # When the product was last updated.
+          name: string # The name of the product (e.g., 'Apple').
+          latestVersion: integer # The version number of the most recent product_version for this product.
+
+        collections:
+          product_versions: # An immutable snapshot of the product's data at a point in time.
+            fields:
+              createdBy: string # The userId of the user who created this version.
+              createdAt: timestamp # When this specific version was created.
+              updatedAt: timestamp # When this specific version was last updated.
+              version: integer # The version number for this snapshot (e.g., 1, 2, 3).
+              nutrition: # The nutritional data per 100g
+                calories: number
+                protein: number
+                carbohydrates: number
+                fat: number
+              units: # A list of measurement units applicable to this product.
+                - name: string # The name of the unit (e.g., 'Medium-Sized Apple').
+                  grams: integer # The weight of the unit in grams.
+
+      recipes: # A conceptual recipe created by a user, like 'Apple Pie'.
+        fields:
+          createdBy: string # The userId of the user who created this recipe.
+          createdAt: timestamp # When the recipe was first created.
+          updatedAt: timestamp # When the recipe was last updated.
+          name: string # The name of the recipe (e.g., 'Apple Pie').
+          latestVersion: integer # The version number of the most recent recipe_version for this recipe.
+
+        collections:
+          recipe_versions: # An immutable snapshot of the recipe's data at a point in time.
+            fields:
+              createdBy: string # The userId of the user who created this version.
+              createdAt: timestamp # When this specific version was created.
+              updatedAt: timestamp # When this specific version was last updated.
+              version: integer # The version number for this snapshot (e.g., 1, 2, 3).
+              ingredients: # A list of ingredients that make up this recipe.
+                - reference: DocumentReference # A polymorphic reference to either a `product_versions` or another `recipe_versions` document.
+                  quantity: number # How many of the 'unit' are included.
+                  unit: string # The name of the desired unit from the referenced version's 'units' array.
+              units: # A list of measurement units applicable to this recipe (e.g., how it can be consumed).
+                - name: string # The name of the unit (e.g., 'Slice').
+                  grams: integer # The weight of the unit in grams.
+
+      entries: # A unified collection for all timeline items (groups, recipe logs, product logs, etc.). A discriminated union.
+        fields:
+          # --- Base & Common Fields ---
+          createdBy: string # The userId of the user who made this entry.
+          createdAt: timestamp # The date and time the entry was logged.
+          updatedAt: timestamp # When the entry was last updated.
+          type: string # 'GROUP', 'RECIPE', or 'PRODUCT'. The discriminator.
+          parentRef: DocumentReference # Optional: A self-reference to a parent 'GROUP' entry in this same collection.
+
+          # --- Discriminator-Specific Fields ---
+          name: string # Type: GROUP. The name of the group (e.g., 'Lunch').
+          recipeVersionRef: DocumentReference # Type: RECIPE. Points to the specific version of the recipe that was logged.
+          productVersionRef: DocumentReference # Type: PRODUCT. Points to the specific version of the product.
+          quantity: number # Type: RECIPE, PRODUCT. The number of 'units' consumed (e.g., 1.5).
+          unit: string # Type: RECIPE, PRODUCT. The unit name consumed (e.g., 'Slice' or 'g').
