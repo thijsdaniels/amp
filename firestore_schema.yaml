@@ -1,4 +1,4 @@
-# This file documents the Firestore database schema for the Vim Reboot app.
+# This file documents the Firestore database schema for the Amp app.
 # All user-owned data is stored under a single user document. Products and recipes
 # are versioned to ensure historical data integrity. Timeline entries can be
 # defined recursively for grouping purposes, while still allowing the entire

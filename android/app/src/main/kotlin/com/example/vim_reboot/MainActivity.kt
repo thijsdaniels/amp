@@ -1,4 +1,4 @@
-package com.example.vim_reboot
+package com.thijsdaniels.amp
 
 import io.flutter.embedding.android.FlutterActivity
 

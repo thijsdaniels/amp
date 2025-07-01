@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "492746394584",
+    "project_id": "thijsdaniels-amp",
+    "storage_bucket": "thijsdaniels-amp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:492746394584:android:3171e4c767ecb7c38840ad",
+        "android_client_info": {
+          "package_name": "com.thijsdaniels.amp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgvAShtwSW4dcCit3kcJBWU9IDCBFOd_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

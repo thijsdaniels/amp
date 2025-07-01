@@ -5,18 +5,18 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "vim_reboot",
+			"name": "amp",
 			"request": "launch",
 			"type": "dart"
 		},
 		{
-			"name": "vim_reboot (profile mode)",
+			"name": "amp (profile mode)",
 			"request": "launch",
 			"type": "dart",
 			"flutterMode": "profile"
 		},
 		{
-			"name": "vim_reboot (release mode)",
+			"name": "amp (release mode)",
 			"request": "launch",
 			"type": "dart",
 			"flutterMode": "release"

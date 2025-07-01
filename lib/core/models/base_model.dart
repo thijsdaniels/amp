@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vim_reboot/data/models/json_converters.dart';
+import 'package:amp/core/models/json_converters.dart';
 
 abstract class BaseModel {
   final String? id;

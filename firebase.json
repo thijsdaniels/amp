@@ -1,0 +1,41 @@
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "thijsdaniels-amp",
+					"appId": "1:492746394584:android:3171e4c767ecb7c38840ad",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"ios": {
+				"default": {
+					"projectId": "thijsdaniels-amp",
+					"appId": "1:492746394584:ios:09349f8f254601478840ad",
+					"uploadDebugSymbols": false,
+					"fileOutput": "ios/Runner/GoogleService-Info.plist"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "thijsdaniels-amp",
+					"configurations": {
+						"android": "1:492746394584:android:3171e4c767ecb7c38840ad",
+						"ios": "1:492746394584:ios:09349f8f254601478840ad",
+						"macos": "1:492746394584:ios:09349f8f254601478840ad",
+						"web": "1:492746394584:web:cbf2e37899e757518840ad",
+						"windows": "1:492746394584:web:1cf4840c72c1f9ba8840ad"
+					}
+				}
+			},
+			"macos": {
+				"default": {
+					"projectId": "thijsdaniels-amp",
+					"appId": "1:492746394584:ios:09349f8f254601478840ad",
+					"uploadDebugSymbols": false,
+					"fileOutput": "macos/Runner/GoogleService-Info.plist"
+				}
+			}
+		}
+	}
+}

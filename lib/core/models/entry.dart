@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:vim_reboot/data/models/base_model.dart';
-import 'package:vim_reboot/data/models/json_converters.dart';
+import 'package:amp/core/models/base_model.dart';
+import 'package:amp/core/models/json_converters.dart';
 
 part 'entry.freezed.dart';
 part 'entry.g.dart';
