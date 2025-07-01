@@ -17,6 +17,7 @@ abstract class ProductVersion extends BaseModel with _$ProductVersion {
     required super.updatedAt,
   });
 
+  @JsonSerializable(explicitToJson: true)
   factory ProductVersion({
     @JsonKey(includeToJson: false, includeFromJson: false) String? id,
     required String createdBy,
