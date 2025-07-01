@@ -1,31 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:amp/features/journal/screens/journal_screen.dart';
-import 'package:amp/features/products/screens/products_screen.dart';
+import 'package:go_router/go_router.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class MainScreen extends StatelessWidget {
+  final Widget child;
 
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  const MainScreen({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: const [JournalScreen(), ProductsScreen()],
-      ),
+      body: child,
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        currentIndex: _calculateSelectedIndex(location),
+        onTap: (index) => _onItemTapped(context, index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Journal'),
           BottomNavigationBarItem(
@@ -35,5 +24,25 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
+  }
+
+  int _calculateSelectedIndex(String location) {
+    if (location.startsWith('/journal')) {
+      return 0;
+    } else if (location.startsWith('/products')) {
+      return 1;
+    }
+    return 0; // Default to journal
+  }
+
+  void _onItemTapped(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/journal');
+        break;
+      case 1:
+        context.go('/products');
+        break;
+    }
   }
 }

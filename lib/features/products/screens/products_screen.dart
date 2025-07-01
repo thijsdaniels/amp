@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amp/features/products/providers/products_stream_provider.dart';
-import 'package:amp/features/products/screens/add_product_screen.dart';
 
 class ProductsScreen extends ConsumerWidget {
   const ProductsScreen({super.key});
@@ -16,11 +16,7 @@ class ProductsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const AddProductScreen(),
-                ),
-              );
+              context.go('/products/add');
             },
             icon: const Icon(Icons.add),
           ),
@@ -61,12 +57,7 @@ class ProductsScreen extends ConsumerWidget {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // TODO: Navigate to product details/edit screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('View ${product.name} - coming soon!'),
-                      ),
-                    );
+                    context.go('/products/${product.id}');
                   },
                 ),
               );
