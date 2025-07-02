@@ -1,355 +1,291 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:amp/core/models/nutrition.dart';
-import 'package:amp/core/models/unit.dart';
-import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:go_router/go_router.dart';
 
-class AddProductScreen extends ConsumerStatefulWidget {
+import '../../../core/models/product.dart';
+import '../../../core/models/nutrition.dart';
+import '../../../core/models/unit.dart';
+import '../data/product_repository.dart';
+import '../providers/product_repository_provider.dart';
+
+class AddProductScreen extends ConsumerWidget {
   const AddProductScreen({super.key});
 
   @override
-  ConsumerState<AddProductScreen> createState() => _AddProductScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final formKey = GlobalKey<FormBuilderState>();
+    final productRepository = ref.watch(productRepositoryProvider);
 
-class _AddProductScreenState extends ConsumerState<AddProductScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _caloriesController = TextEditingController();
-  final _proteinController = TextEditingController();
-  final _carbsController = TextEditingController();
-  final _fatController = TextEditingController();
-
-  final List<UnitFormData> _units = [
-    UnitFormData(
-      nameController: TextEditingController(),
-      gramsController: TextEditingController(),
-    ),
-  ];
-
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _caloriesController.dispose();
-    _proteinController.dispose();
-    _carbsController.dispose();
-    _fatController.dispose();
-    for (final unit in _units) {
-      unit.dispose();
-    }
-    super.dispose();
-  }
-
-  void _addUnit() {
-    setState(() {
-      _units.add(
-        UnitFormData(
-          nameController: TextEditingController(),
-          gramsController: TextEditingController(),
-        ),
-      );
-    });
-  }
-
-  void _removeUnit(int index) {
-    if (_units.length > 1) {
-      setState(() {
-        _units[index].dispose();
-        _units.removeAt(index);
-      });
-    }
-  }
-
-  Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final nutrition = Nutrition(
-        calories: double.parse(_caloriesController.text),
-        protein: double.parse(_proteinController.text),
-        carbohydrates: double.parse(_carbsController.text),
-        fat: double.parse(_fatController.text),
-      );
-
-      final units = _units
-          .map(
-            (unitData) => Unit(
-              name: unitData.nameController.text,
-              grams: int.parse(unitData.gramsController.text),
-            ),
-          )
-          .toList();
-
-      final productRepository = ref.read(productRepositoryProvider);
-      await productRepository.createProduct(
-        name: _nameController.text,
-        nutrition: nutrition,
-        units: units,
-      );
-
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product created successfully!')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error creating product: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Product'),
         actions: [
           TextButton(
-            onPressed: _isLoading ? null : _saveProduct,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
+            onPressed: () => _submitForm(context, formKey, productRepository),
+            child: const Text('Save'),
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Product Name
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Product Name',
-                border: OutlineInputBorder(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: FormBuilder(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Product Name
+              FormBuilderTextField(
+                name: 'name',
+                decoration: const InputDecoration(
+                  labelText: 'Product Name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.minLength(2),
+                ]),
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a product name';
-                }
-                return null;
-              },
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-            // Nutrition Section
-            Text(
-              'Nutrition (per 100g)',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
+              // Nutrition Section
+              const Text(
+                'Nutrition Information (per 100g)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
 
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _caloriesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Calories',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid number';
-                      }
-                      return null;
-                    },
-                  ),
+              const SizedBox(height: 12),
+
+              // Calories
+              FormBuilderTextField(
+                name: 'calories',
+                decoration: const InputDecoration(
+                  labelText: 'Calories',
+                  border: OutlineInputBorder(),
+                  suffixText: 'kcal',
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _proteinController,
-                    decoration: const InputDecoration(
-                      labelText: 'Protein (g)',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid number';
-                      }
-                      return null;
-                    },
-                  ),
+                keyboardType: TextInputType.number,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.numeric(),
+                  FormBuilderValidators.min(0),
+                ]),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Protein
+              FormBuilderTextField(
+                name: 'protein',
+                decoration: const InputDecoration(
+                  labelText: 'Protein',
+                  border: OutlineInputBorder(),
+                  suffixText: 'g',
                 ),
-              ],
-            ),
+                keyboardType: TextInputType.number,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.numeric(),
+                  FormBuilderValidators.min(0),
+                ]),
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _carbsController,
-                    decoration: const InputDecoration(
-                      labelText: 'Carbs (g)',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid number';
-                      }
-                      return null;
-                    },
-                  ),
+              // Carbs
+              FormBuilderTextField(
+                name: 'carbs',
+                decoration: const InputDecoration(
+                  labelText: 'Carbohydrates',
+                  border: OutlineInputBorder(),
+                  suffixText: 'g',
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _fatController,
-                    decoration: const InputDecoration(
-                      labelText: 'Fat (g)',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid number';
-                      }
-                      return null;
-                    },
-                  ),
+                keyboardType: TextInputType.number,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.numeric(),
+                  FormBuilderValidators.min(0),
+                ]),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Fat
+              FormBuilderTextField(
+                name: 'fat',
+                decoration: const InputDecoration(
+                  labelText: 'Fat',
+                  border: OutlineInputBorder(),
+                  suffixText: 'g',
                 ),
-              ],
-            ),
+                keyboardType: TextInputType.number,
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(),
+                  FormBuilderValidators.numeric(),
+                  FormBuilderValidators.min(0),
+                ]),
+              ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Units Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Units', style: Theme.of(context).textTheme.titleMedium),
-                TextButton.icon(
-                  onPressed: _addUnit,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Unit'),
-                ),
-              ],
-            ),
+              // Units Section
+              const Text(
+                'Available Units',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-            // Units List
-            ..._units.asMap().entries.map((entry) {
-              final index = entry.key;
-              final unitData = entry.value;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextFormField(
-                                controller: unitData.nameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Unit Name',
-                                  hintText: 'e.g., Medium Apple',
-                                  border: OutlineInputBorder(),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Required';
-                                  }
-                                  return null;
-                                },
-                              ),
+              // Units List
+              FormBuilderField<List<Unit>>(
+                name: 'units',
+                initialValue: [const Unit(name: '100g', grams: 100)],
+                validator: (units) {
+                  if (units == null || units.isEmpty) {
+                    return 'At least one unit is required';
+                  }
+                  return null;
+                },
+                builder: (field) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (field.errorText != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Text(
+                            field.errorText!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
-                                controller: unitData.gramsController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Grams',
-                                  border: OutlineInputBorder(),
-                                ),
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Required';
-                                  }
-                                  if (int.tryParse(value) == null) {
-                                    return 'Invalid';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            if (_units.length > 1) ...[
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () => _removeUnit(index),
-                                icon: const Icon(Icons.delete),
-                                color: Colors.red,
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ],
+                      ...field.value!.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final unit = entry.value;
+
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: TextFormField(
+                                    initialValue: unit.name,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Unit Name',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    onChanged: (value) {
+                                      final updatedUnits = List<Unit>.from(
+                                        field.value!,
+                                      );
+                                      updatedUnits[index] = unit.copyWith(
+                                        name: value,
+                                      );
+                                      field.didChange(updatedUnits);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: unit.grams.toString(),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Grams',
+                                      border: OutlineInputBorder(),
+                                      suffixText: 'g',
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (value) {
+                                      final grams = int.tryParse(value) ?? 0;
+                                      final updatedUnits = List<Unit>.from(
+                                        field.value!,
+                                      );
+                                      updatedUnits[index] = unit.copyWith(
+                                        grams: grams,
+                                      );
+                                      field.didChange(updatedUnits);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                if (field.value!.length > 1)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      final updatedUnits = List<Unit>.from(
+                                        field.value!,
+                                      );
+                                      updatedUnits.removeAt(index);
+                                      field.didChange(updatedUnits);
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          final updatedUnits = List<Unit>.from(field.value!);
+                          updatedUnits.add(const Unit(name: '', grams: 0));
+                          field.didChange(updatedUnits);
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Unit'),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class UnitFormData {
-  final TextEditingController nameController;
-  final TextEditingController gramsController;
+  void _submitForm(
+    BuildContext context,
+    GlobalKey<FormBuilderState> formKey,
+    ProductRepository productRepository,
+  ) async {
+    if (formKey.currentState?.saveAndValidate() ?? false) {
+      final formData = formKey.currentState!.value;
 
-  UnitFormData({required this.nameController, required this.gramsController});
+      try {
+        final nutrition = Nutrition(
+          calories: double.parse(formData['calories'] as String),
+          protein: double.parse(formData['protein'] as String),
+          carbohydrates: double.parse(formData['carbs'] as String),
+          fat: double.parse(formData['fat'] as String),
+        );
 
-  void dispose() {
-    nameController.dispose();
-    gramsController.dispose();
+        await productRepository.createProduct(
+          name: formData['name'] as String,
+          nutrition: nutrition,
+          units: formData['units'] as List<Unit>,
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Product created successfully!')),
+          );
+          context.pop();
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error creating product: $e')));
+        }
+      }
+    }
   }
 }
