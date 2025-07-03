@@ -78,4 +78,24 @@ class ProductRepository {
       }).toList();
     });
   }
+
+  Future<Product> getProduct(String productId) async {
+    final doc = await _productsRef.doc(productId).get();
+    return doc.data()!.copyWith(id: doc.id);
+  }
+
+  Future<ProductVersion> getLatestProductVersion(String productId) async {
+    final snapshot = await _productVersionsRef(
+      productId,
+    ).orderBy('version', descending: true).limit(1).get();
+    final doc = snapshot.docs.first;
+    return doc.data().copyWith(id: doc.id);
+  }
+
+  DocumentReference<ProductVersion> getProductVersionRef(
+    String productId,
+    String productVersionId,
+  ) {
+    return _productVersionsRef(productId).doc(productVersionId);
+  }
 }

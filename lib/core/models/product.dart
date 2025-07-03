@@ -9,7 +9,6 @@ part 'product.g.dart';
 @freezed
 abstract class Product extends BaseModel with _$Product {
   Product._({
-    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,

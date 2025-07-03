@@ -9,7 +9,6 @@ part 'recipe.g.dart';
 @freezed
 abstract class Recipe extends BaseModel with _$Recipe {
   Recipe._({
-    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,

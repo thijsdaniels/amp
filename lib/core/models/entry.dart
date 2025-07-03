@@ -7,9 +7,8 @@ part 'entry.freezed.dart';
 part 'entry.g.dart';
 
 @Freezed(unionKey: 'type')
-abstract class Entry extends BaseModel with _$Entry {
+sealed class Entry extends BaseModel with _$Entry {
   Entry._({
-    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
@@ -33,6 +32,7 @@ abstract class Entry extends BaseModel with _$Entry {
     @TimestampConverter() required Timestamp updatedAt,
     @DocumentReferenceConverter() DocumentReference? parentRef,
     @DocumentReferenceConverter() required DocumentReference recipeVersionRef,
+    required String name,
     required double quantity,
     required String unit,
   }) = RecipeEntry;
@@ -45,9 +45,19 @@ abstract class Entry extends BaseModel with _$Entry {
     @TimestampConverter() required Timestamp updatedAt,
     @DocumentReferenceConverter() DocumentReference? parentRef,
     @DocumentReferenceConverter() required DocumentReference productVersionRef,
+    required String name,
     required double quantity,
     required String unit,
   }) = ProductEntry;
 
   factory Entry.fromJson(Map<String, dynamic> json) => _$EntryFromJson(json);
+
+  @override
+  String get name {
+    return switch (this) {
+      GroupEntry(:final name) => name,
+      RecipeEntry(:final name) => name,
+      ProductEntry(:final name) => name,
+    };
+  }
 }

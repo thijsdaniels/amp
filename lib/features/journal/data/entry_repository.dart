@@ -18,8 +18,7 @@ class EntryRepository {
         toFirestore: (entry, _) => entry.toJson(),
       );
 
-  Future<List<Entry>> getEntriesForDay(DateTime day) async {
-    // Create Timestamps for the start and end of the given day.
+  Stream<List<Entry>> getEntriesStream(DateTime day) {
     final startOfDay = Timestamp.fromDate(
       DateTime(day.year, day.month, day.day),
     );
@@ -27,25 +26,24 @@ class EntryRepository {
       DateTime(day.year, day.month, day.day, 23, 59, 59),
     );
 
+    return _entriesRef
+        .where('createdAt', isGreaterThanOrEqualTo: startOfDay)
+        .where('createdAt', isLessThanOrEqualTo: endOfDay)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final entry = doc.data();
+            return entry.copyWith(id: doc.id);
+          }).toList(),
+        );
+  }
+
+  Future<void> deleteEntry(String entryId) async {
     try {
-      final querySnapshot = await _entriesRef
-          .where('createdAt', isGreaterThanOrEqualTo: startOfDay)
-          .where('createdAt', isLessThanOrEqualTo: endOfDay)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      // We need to manually add the document ID to our model object after creation.
-      final entries = querySnapshot.docs.map((doc) {
-        final entry = doc.data();
-        // The freezed `copyWith` will be very useful here.
-        // We'll need to make sure our models have it properly configured.
-        return entry.copyWith(id: doc.id);
-      }).toList();
-
-      return entries;
+      await _entriesRef.doc(entryId).delete();
     } catch (e) {
-      // It's good practice to log the error and rethrow or handle it.
-      print('Error fetching entries: $e');
+      print('Error deleting entry: $e');
       rethrow;
     }
   }

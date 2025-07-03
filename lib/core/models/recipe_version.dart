@@ -11,7 +11,6 @@ part 'recipe_version.g.dart';
 @freezed
 abstract class RecipeVersion extends BaseModel with _$RecipeVersion {
   RecipeVersion._({
-    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,

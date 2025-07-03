@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/models/product.dart';
 import '../../../core/models/nutrition.dart';
 import '../../../core/models/unit.dart';
 import '../data/product_repository.dart';
@@ -141,14 +140,9 @@ class AddProductScreen extends ConsumerWidget {
               // Units List
               FormBuilderField<List<Unit>>(
                 name: 'units',
-                initialValue: [const Unit(name: '100g', grams: 100)],
-                validator: (units) {
-                  if (units == null || units.isEmpty) {
-                    return 'At least one unit is required';
-                  }
-                  return null;
-                },
+                initialValue: const [],
                 builder: (field) {
+                  final units = field.value ?? [];
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -163,7 +157,7 @@ class AddProductScreen extends ConsumerWidget {
                             ),
                           ),
                         ),
-                      ...field.value!.asMap().entries.map((entry) {
+                      ...units.asMap().entries.map((entry) {
                         final index = entry.key;
                         final unit = entry.value;
 
@@ -182,7 +176,7 @@ class AddProductScreen extends ConsumerWidget {
                                     ),
                                     onChanged: (value) {
                                       final updatedUnits = List<Unit>.from(
-                                        field.value!,
+                                        units,
                                       );
                                       updatedUnits[index] = unit.copyWith(
                                         name: value,
@@ -204,7 +198,7 @@ class AddProductScreen extends ConsumerWidget {
                                     onChanged: (value) {
                                       final grams = int.tryParse(value) ?? 0;
                                       final updatedUnits = List<Unit>.from(
-                                        field.value!,
+                                        units,
                                       );
                                       updatedUnits[index] = unit.copyWith(
                                         grams: grams,
@@ -214,12 +208,12 @@ class AddProductScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                if (field.value!.length > 1)
+                                if (units.length > 1)
                                   IconButton(
                                     icon: const Icon(Icons.delete),
                                     onPressed: () {
                                       final updatedUnits = List<Unit>.from(
-                                        field.value!,
+                                        units,
                                       );
                                       updatedUnits.removeAt(index);
                                       field.didChange(updatedUnits);
@@ -233,7 +227,7 @@ class AddProductScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () {
-                          final updatedUnits = List<Unit>.from(field.value!);
+                          final updatedUnits = List<Unit>.from(units);
                           updatedUnits.add(const Unit(name: '', grams: 0));
                           field.didChange(updatedUnits);
                         },

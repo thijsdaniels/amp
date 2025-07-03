@@ -11,16 +11,12 @@ class ProductsScreen extends ConsumerWidget {
     final productsAsyncValue = ref.watch(productsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Products'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.go('/products/add');
-            },
-            icon: const Icon(Icons.add),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Products')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.go('/products/add');
+        },
+        child: const Icon(Icons.add),
       ),
       body: productsAsyncValue.when(
         data: (products) {

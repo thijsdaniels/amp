@@ -11,7 +11,6 @@ part 'product_version.g.dart';
 @freezed
 abstract class ProductVersion extends BaseModel with _$ProductVersion {
   ProductVersion._({
-    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
