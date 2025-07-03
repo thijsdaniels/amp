@@ -10,15 +10,23 @@ final journalEntriesProvider = StreamProvider<List<Entry>>((ref) {
   return entryRepo.getEntriesStream(DateTime.now());
 });
 
-class JournalScreen extends ConsumerWidget {
+class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends ConsumerState<JournalScreen> {
+  bool _isSelectionMode = false;
+  final Set<String> _selectedEntryIds = {};
+
+  @override
+  Widget build(BuildContext context) {
     final entriesAsync = ref.watch(journalEntriesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Journal')),
+      appBar: _buildAppBar(),
       body: entriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) =>
@@ -47,6 +55,7 @@ class JournalScreen extends ConsumerWidget {
                 ProductEntry() => Icons.fastfood,
                 RecipeEntry() => Icons.restaurant_menu,
                 GroupEntry() => Icons.group_work,
+                _ => null,
               };
               final subtitle = switch (entry) {
                 ProductEntry(:final quantity, :final unit) => '$quantity $unit',
@@ -54,17 +63,22 @@ class JournalScreen extends ConsumerWidget {
                 GroupEntry() => null,
               };
 
+              final isSelected = _selectedEntryIds.contains(entry.id!);
+
               return Card(
                 child: ListTile(
                   leading: Icon(icon),
                   title: Text(entry.name),
                   subtitle: subtitle != null ? Text(subtitle) : null,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () =>
-                        _showDeleteConfirmation(context, ref, entry),
-                  ),
-                  // TODO: Add onTap to navigate to entry details
+                  trailing: _isSelectionMode
+                      ? Checkbox(
+                          value: isSelected,
+                          onChanged: (_) => _onTap(entry),
+                        )
+                      : null,
+                  onLongPress: () => _onLongPress(entry),
+                  onTap: () => _onTap(entry),
+                  selected: isSelected,
                 ),
               );
             },
@@ -83,16 +97,64 @@ class JournalScreen extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(
-    BuildContext context,
-    WidgetRef ref,
-    Entry entry,
-  ) {
+  AppBar _buildAppBar() {
+    if (!_isSelectionMode) {
+      return AppBar(title: const Text('Journal'));
+    }
+
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () {
+          setState(() {
+            _isSelectionMode = false;
+            _selectedEntryIds.clear();
+          });
+        },
+      ),
+      title: Text('${_selectedEntryIds.length} selected'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          onPressed: () => _showDeleteConfirmation(context),
+        ),
+      ],
+    );
+  }
+
+  void _onLongPress(Entry entry) {
+    if (_isSelectionMode) return;
+    setState(() {
+      _isSelectionMode = true;
+      _selectedEntryIds.add(entry.id!);
+    });
+  }
+
+  void _onTap(Entry entry) {
+    if (!_isSelectionMode) {
+      // TODO: Handle navigation to detail screen
+      return;
+    }
+    setState(() {
+      if (_selectedEntryIds.contains(entry.id!)) {
+        _selectedEntryIds.remove(entry.id!);
+        if (_selectedEntryIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedEntryIds.add(entry.id!);
+      }
+    });
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Entry?'),
-        content: Text('Are you sure you want to delete "${entry.name}"?'),
+        title: Text('Delete ${_selectedEntryIds.length} Entries?'),
+        content: const Text(
+          'Are you sure you want to delete the selected entries? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -101,12 +163,23 @@ class JournalScreen extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               try {
-                await ref.read(entryRepositoryProvider).deleteEntry(entry.id!);
+                final repo = ref.read(entryRepositoryProvider);
+                // Create a copy to avoid concurrent modification errors
+                final idsToDelete = List<String>.from(_selectedEntryIds);
+                for (final entryId in idsToDelete) {
+                  await repo.deleteEntry(entryId);
+                }
+
+                setState(() {
+                  _selectedEntryIds.clear();
+                  _isSelectionMode = false;
+                });
+
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Entry deleted.'),
+                  SnackBar(
+                    content: Text('${idsToDelete.length} entries deleted.'),
                     backgroundColor: Colors.green,
                   ),
                 );
@@ -115,7 +188,7 @@ class JournalScreen extends ConsumerWidget {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Error deleting entry: $e'),
+                    content: Text('Error deleting entries: $e'),
                     backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );

@@ -196,7 +196,7 @@ class AddProductScreen extends ConsumerWidget {
                                     ),
                                     keyboardType: TextInputType.number,
                                     onChanged: (value) {
-                                      final grams = int.tryParse(value) ?? 0;
+                                      final grams = num.tryParse(value) ?? 0;
                                       final updatedUnits = List<Unit>.from(
                                         units,
                                       );
