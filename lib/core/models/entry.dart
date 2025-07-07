@@ -20,6 +20,7 @@ sealed class Entry extends BaseModel with _$Entry {
     required String createdBy,
     @TimestampConverter() required Timestamp createdAt,
     @TimestampConverter() required Timestamp updatedAt,
+    @TimestampConverter() required Timestamp occurredAt,
     @DocumentReferenceConverter() DocumentReference? parentRef,
     required String name,
   }) = GroupEntry;
@@ -30,6 +31,7 @@ sealed class Entry extends BaseModel with _$Entry {
     required String createdBy,
     @TimestampConverter() required Timestamp createdAt,
     @TimestampConverter() required Timestamp updatedAt,
+    @TimestampConverter() required Timestamp occurredAt,
     @DocumentReferenceConverter() DocumentReference? parentRef,
     @DocumentReferenceConverter() required DocumentReference recipeVersionRef,
     required String name,
@@ -43,6 +45,7 @@ sealed class Entry extends BaseModel with _$Entry {
     required String createdBy,
     @TimestampConverter() required Timestamp createdAt,
     @TimestampConverter() required Timestamp updatedAt,
+    @TimestampConverter() required Timestamp occurredAt,
     @DocumentReferenceConverter() DocumentReference? parentRef,
     @DocumentReferenceConverter() required DocumentReference productVersionRef,
     required String name,
@@ -51,13 +54,4 @@ sealed class Entry extends BaseModel with _$Entry {
   }) = ProductEntry;
 
   factory Entry.fromJson(Map<String, dynamic> json) => _$EntryFromJson(json);
-
-  @override
-  String get name {
-    return switch (this) {
-      GroupEntry(:final name) => name,
-      RecipeEntry(:final name) => name,
-      ProductEntry(:final name) => name,
-    };
-  }
 }

@@ -206,6 +206,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         createdBy: uid,
                         createdAt: now,
                         updatedAt: now,
+                        occurredAt: now,
                         productVersionRef: ref
                             .read(productRepositoryProvider)
                             .getProductVersionRef(

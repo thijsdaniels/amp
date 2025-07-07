@@ -16,6 +16,7 @@ abstract class RecipeVersion extends BaseModel with _$RecipeVersion {
     required super.updatedAt,
   });
 
+  @JsonSerializable(explicitToJson: true)
   factory RecipeVersion({
     @JsonKey(includeToJson: false, includeFromJson: false) String? id,
     required String createdBy,

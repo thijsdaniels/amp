@@ -2,8 +2,6 @@
 
 ## Selected
 
-- [x] Make product units optional, and always support grams as the default unit
-- [x] Support deleting product consumption entries
 - [ ] Implement Group Entry to group any log entries (e.g., several products to make a meal)
 - [ ] Update journal screen to support rendering group entries
 - [ ] update journal screen to only show root entries
@@ -21,8 +19,10 @@
 
 ## Backlog
 
+- [ ] Add support for logging measurements (e.g., weight, body fat) as a new Entry type
 - [ ] Implement Journal date picker to view past dates
 - [ ] Add recents and/or frequents to the products view
+- [ ] Allow expansion of the journal entries to show nested entries
 - [ ] Add categories/tags to refine the search in the products view
 - [ ] Add a way to mark products as favorites and make those easily accessible
 - [ ] Implement GoRouter errorBuilder for routing errors
@@ -34,3 +34,14 @@
 - [ ] Add USDA API as a products source
 - [ ] Support opting in and out of product sources
 - [ ] Support opting in to other users as product sources
+- [ ] Graphs and trends for calories, macros, expenditure, etc.
+- [ ] Configurable target calories and macros for the day
+
+## Done
+
+- [x] Implement Group Entry to group any log entries (e.g., several products to make a meal)
+- [x] Support deleting product consumption entries
+- [x] Make product units optional, and always support grams as the default unit
+- [x] Implement product consumptions feature
+- [x] Refactor `AddProductScreen` with `flutter_form_builder`
+- [x] Move `ProductDetailScreen` to its own file

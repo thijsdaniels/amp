@@ -27,9 +27,24 @@ class EntryRepository {
     );
 
     return _entriesRef
-        .where('createdAt', isGreaterThanOrEqualTo: startOfDay)
-        .where('createdAt', isLessThanOrEqualTo: endOfDay)
-        .orderBy('createdAt', descending: true)
+        .where('parentRef', isNull: true)
+        .where('occurredAt', isGreaterThanOrEqualTo: startOfDay)
+        .where('occurredAt', isLessThanOrEqualTo: endOfDay)
+        .orderBy('occurredAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final entry = doc.data();
+            return entry.copyWith(id: doc.id);
+          }).toList(),
+        );
+  }
+
+  Stream<List<Entry>> getEntriesByParentIdStream(String parentId) {
+    final parentRef = _entriesRef.doc(parentId);
+    return _entriesRef
+        .where('parentRef', isEqualTo: parentRef)
+        .orderBy('occurredAt', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs.map((doc) {
@@ -48,6 +63,49 @@ class EntryRepository {
     }
   }
 
+  Future<void> groupEntries(List<String> entryIds, String name) async {
+    if (entryIds.isEmpty) return;
+
+    // 1. Fetch the entries to be grouped to find the earliest timestamp
+    final entriesSnapshot = await _entriesRef
+        .where(FieldPath.documentId, whereIn: entryIds)
+        .get();
+    final entries = entriesSnapshot.docs.map((doc) => doc.data()).toList();
+
+    if (entries.isEmpty) return;
+
+    // 2. Find the earliest occurredAt timestamp
+    final earliestTimestamp = entries.fold(
+      entries.first.occurredAt,
+      (earliest, current) => current.occurredAt.compareTo(earliest) < 0
+          ? current.occurredAt
+          : earliest,
+    );
+
+    final batch = _firestore.batch();
+    final now = Timestamp.now();
+
+    // 3. Create the new GroupEntry with the calculated timestamp
+    final newGroupRef = _entriesRef.doc();
+    final newGroup = Entry.group(
+      createdBy: _uid,
+      createdAt: now,
+      updatedAt: now,
+      occurredAt: earliestTimestamp,
+      name: name,
+    );
+    batch.set(newGroupRef, newGroup);
+
+    // 4. Update the parentRef for all selected entries
+    for (final entryId in entryIds) {
+      final entryRef = _entriesRef.doc(entryId);
+      batch.update(entryRef, {'parentRef': newGroupRef});
+    }
+
+    // 5. Commit the atomic write
+    await batch.commit();
+  }
+
   Future<DocumentReference<Entry>> addEntry(Entry entry) async {
     try {
       final docRef = await _entriesRef.add(entry);
@@ -56,5 +114,10 @@ class EntryRepository {
       print('Error adding entry: $e');
       rethrow;
     }
+  }
+
+  Future<Entry> getEntry(String entryId) async {
+    final doc = await _entriesRef.doc(entryId).get();
+    return doc.data()!.copyWith(id: doc.id);
   }
 }

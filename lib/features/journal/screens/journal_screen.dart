@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
+import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
+import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
 
 final journalEntriesProvider = StreamProvider<List<Entry>>((ref) {
   final entryRepo = ref.watch(entryRepositoryProvider);
@@ -51,36 +55,37 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             itemCount: entries.length,
             itemBuilder: (context, index) {
               final entry = entries[index];
-              final icon = switch (entry) {
-                ProductEntry() => Icons.fastfood,
-                RecipeEntry() => Icons.restaurant_menu,
-                GroupEntry() => Icons.group_work,
-                _ => null,
-              };
-              final subtitle = switch (entry) {
-                ProductEntry(:final quantity, :final unit) => '$quantity $unit',
-                RecipeEntry(:final quantity, :final unit) => '$quantity $unit',
-                GroupEntry() => null,
-              };
-
               final isSelected = _selectedEntryIds.contains(entry.id!);
 
-              return Card(
-                child: ListTile(
-                  leading: Icon(icon),
-                  title: Text(entry.name),
-                  subtitle: subtitle != null ? Text(subtitle) : null,
-                  trailing: _isSelectionMode
-                      ? Checkbox(
-                          value: isSelected,
-                          onChanged: (_) => _onTap(entry),
-                        )
-                      : null,
+              return switch (entry) {
+                ProductEntry() => ProductEntryListItem(
+                  entry: entry,
+                  isSelected: isSelected,
+                  onTap: () => _onListItemTapped(entry),
                   onLongPress: () => _onLongPress(entry),
-                  onTap: () => _onTap(entry),
-                  selected: isSelected,
+                  onToggleSelection: _isSelectionMode
+                      ? () => _toggleSelection(entry)
+                      : null,
                 ),
-              );
+                RecipeEntry() => RecipeEntryListItem(
+                  entry: entry,
+                  isSelected: isSelected,
+                  onTap: () => _onListItemTapped(entry),
+                  onLongPress: () => _onLongPress(entry),
+                  onToggleSelection: _isSelectionMode
+                      ? () => _toggleSelection(entry)
+                      : null,
+                ),
+                GroupEntry() => GroupEntryListItem(
+                  entry: entry,
+                  isSelected: isSelected,
+                  onTap: () => _onListItemTapped(entry),
+                  onLongPress: () => _onLongPress(entry),
+                  onToggleSelection: _isSelectionMode
+                      ? () => _toggleSelection(entry)
+                      : null,
+                ),
+              };
             },
           );
         },
@@ -115,8 +120,12 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       title: Text('${_selectedEntryIds.length} selected'),
       actions: [
         IconButton(
+          icon: const Icon(Icons.group_work_outlined),
+          onPressed: () => _showGroupDialog(context),
+        ),
+        IconButton(
           icon: const Icon(Icons.delete_outline),
-          onPressed: () => _showDeleteConfirmation(context),
+          onPressed: () => _showDeleteDialog(context),
         ),
       ],
     );
@@ -130,11 +139,21 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     });
   }
 
-  void _onTap(Entry entry) {
-    if (!_isSelectionMode) {
-      // TODO: Handle navigation to detail screen
-      return;
+  void _onListItemTapped(Entry entry) {
+    switch (entry) {
+      case GroupEntry():
+        context.push('/journal/group/${entry.id}', extra: entry);
+        break;
+      case ProductEntry():
+        context.push('/journal/product/${entry.id}', extra: entry);
+        break;
+      case RecipeEntry():
+        context.push('/journal/recipe/${entry.id}', extra: entry);
+        break;
     }
+  }
+
+  void _toggleSelection(Entry entry) {
     setState(() {
       if (_selectedEntryIds.contains(entry.id!)) {
         _selectedEntryIds.remove(entry.id!);
@@ -147,7 +166,70 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     });
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
+  void _showGroupDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Name Your Group'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'e.g., Breakfast'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a name';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final groupName = nameController.text;
+                  try {
+                    await ref
+                        .read(entryRepositoryProvider)
+                        .groupEntries(_selectedEntryIds.toList(), groupName);
+
+                    setState(() {
+                      _selectedEntryIds.clear();
+                      _isSelectionMode = false;
+                    });
+
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error creating group: $e'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Group'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
