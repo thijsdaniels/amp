@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:amp/core/models/base_model.dart';
 import 'package:amp/core/models/json_converters.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'entry.freezed.dart';
 part 'entry.g.dart';
@@ -25,20 +25,6 @@ sealed class Entry extends BaseModel with _$Entry {
     required String name,
   }) = GroupEntry;
 
-  @FreezedUnionValue('RECIPE')
-  factory Entry.recipe({
-    @JsonKey(includeToJson: false, includeFromJson: false) String? id,
-    required String createdBy,
-    @TimestampConverter() required Timestamp createdAt,
-    @TimestampConverter() required Timestamp updatedAt,
-    @TimestampConverter() required Timestamp occurredAt,
-    @DocumentReferenceConverter() DocumentReference? parentRef,
-    @DocumentReferenceConverter() required DocumentReference recipeVersionRef,
-    required String name,
-    required double quantity,
-    required String unit,
-  }) = RecipeEntry;
-
   @FreezedUnionValue('PRODUCT')
   factory Entry.product({
     @JsonKey(includeToJson: false, includeFromJson: false) String? id,
@@ -52,6 +38,20 @@ sealed class Entry extends BaseModel with _$Entry {
     required double quantity,
     required String unit,
   }) = ProductEntry;
+
+  @FreezedUnionValue('RECIPE')
+  factory Entry.recipe({
+    @JsonKey(includeToJson: false, includeFromJson: false) String? id,
+    required String createdBy,
+    @TimestampConverter() required Timestamp createdAt,
+    @TimestampConverter() required Timestamp updatedAt,
+    @TimestampConverter() required Timestamp occurredAt,
+    @DocumentReferenceConverter() DocumentReference? parentRef,
+    @DocumentReferenceConverter() required DocumentReference recipeVersionRef,
+    required String name,
+    required double quantity,
+    required String unit,
+  }) = RecipeEntry;
 
   factory Entry.fromJson(Map<String, dynamic> json) => _$EntryFromJson(json);
 }

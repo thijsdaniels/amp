@@ -2,11 +2,8 @@
 
 ## Selected
 
-- [ ] Implement Group Entry to group any log entries (e.g., several products to make a meal)
-- [ ] Update journal screen to support rendering group entries
-- [ ] update journal screen to only show root entries
-- [ ] Update journal screen to somehow show nested entries
-- [ ] Create product entry detail screen
+- [ ] Show consumed nutrition on product entry detail screen
+- [ ] Check if we can refactor anything to improve code quality and sustainability
 - [ ] Support editing products
 - [ ] Support editing product consumption entries
 - [ ] Replace products list with a search UI, likely using Algolia
@@ -19,6 +16,7 @@
 
 ## Backlog
 
+- [ ] Update journal screen to show nested entries in some way
 - [ ] Add support for logging measurements (e.g., weight, body fat) as a new Entry type
 - [ ] Implement Journal date picker to view past dates
 - [ ] Add recents and/or frequents to the products view
@@ -39,6 +37,9 @@
 
 ## Done
 
+- [x] Create product entry detail screen
+- [x] Update journal screen to support rendering group entries
+- [x] update journal screen to only show root entries
 - [x] Implement Group Entry to group any log entries (e.g., several products to make a meal)
 - [x] Support deleting product consumption entries
 - [x] Make product units optional, and always support grams as the default unit

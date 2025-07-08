@@ -8,7 +8,7 @@ part 'ingredient.g.dart';
 @freezed
 abstract class Ingredient with _$Ingredient {
   const factory Ingredient({
-    @DocumentReferenceConverter() required DocumentReference reference,
+    @DocumentReferenceConverter() required DocumentReference productVersionRef,
     required double quantity,
     required String unit,
   }) = _Ingredient;
