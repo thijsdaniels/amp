@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:amp/core/models/nutrition.dart';
 import 'package:amp/core/models/product.dart';
 import 'package:amp/core/models/product_version.dart';
-import 'package:amp/core/models/nutrition.dart';
 import 'package:amp/core/models/unit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductRepository {
   final FirebaseFirestore _firestore;
@@ -17,8 +17,8 @@ class ProductRepository {
       .doc(_uid)
       .collection('products')
       .withConverter<Product>(
-        fromFirestore: (snapshot, _) => Product.fromJson(snapshot.data()!),
-        toFirestore: (product, _) => product.toJson(),
+        fromFirestore: (snapshot, _) => Product.fromSnapshot(snapshot),
+        toFirestore: (product, _) => product.toMap(),
       );
 
   CollectionReference<ProductVersion> _productVersionsRef(String productId) =>
@@ -27,8 +27,8 @@ class ProductRepository {
           .collection('product_versions')
           .withConverter<ProductVersion>(
             fromFirestore: (snapshot, _) =>
-                ProductVersion.fromJson(snapshot.data()!),
-            toFirestore: (productVersion, _) => productVersion.toJson(),
+                ProductVersion.fromSnapshot(snapshot),
+            toFirestore: (productVersion, _) => productVersion.toMap(),
           );
 
   Future<void> createProduct({
@@ -72,16 +72,13 @@ class ProductRepository {
 
   Stream<List<Product>> getProductsStream() {
     return _productsRef.orderBy('name').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final product = doc.data();
-        return product.copyWith(id: doc.id);
-      }).toList();
+      return snapshot.docs.map((doc) => doc.data()).toList();
     });
   }
 
   Future<Product> getProduct(String productId) async {
     final doc = await _productsRef.doc(productId).get();
-    return doc.data()!.copyWith(id: doc.id);
+    return doc.data()!;
   }
 
   Future<ProductVersion> getLatestProductVersion(String productId) async {
@@ -89,7 +86,7 @@ class ProductRepository {
       productId,
     ).orderBy('version', descending: true).limit(1).get();
     final doc = snapshot.docs.first;
-    return doc.data().copyWith(id: doc.id);
+    return doc.data();
   }
 
   DocumentReference<ProductVersion> getProductVersionRef(

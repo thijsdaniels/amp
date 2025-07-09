@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EntryRepository {
   final FirebaseFirestore _firestore;
@@ -14,8 +14,8 @@ class EntryRepository {
       .doc(_uid)
       .collection('entries')
       .withConverter<Entry>(
-        fromFirestore: (snapshot, _) => Entry.fromJson(snapshot.data()!),
-        toFirestore: (entry, _) => entry.toJson(),
+        fromFirestore: (snapshot, _) => Entry.fromSnapshot(snapshot),
+        toFirestore: (entry, _) => entry.toMap(),
       );
 
   Stream<List<Entry>> getEntriesStream(DateTime day) {
@@ -32,12 +32,7 @@ class EntryRepository {
         .where('occurredAt', isLessThanOrEqualTo: endOfDay)
         .orderBy('occurredAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.map((doc) {
-            final entry = doc.data();
-            return entry.copyWith(id: doc.id);
-          }).toList(),
-        );
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
   Stream<List<Entry>> getEntriesByParentIdStream(String parentId) {
@@ -46,12 +41,7 @@ class EntryRepository {
         .where('parentRef', isEqualTo: parentRef)
         .orderBy('occurredAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.map((doc) {
-            final entry = doc.data();
-            return entry.copyWith(id: doc.id);
-          }).toList(),
-        );
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
 
   Future<void> deleteEntry(String entryId) async {
@@ -87,7 +77,7 @@ class EntryRepository {
 
     // 3. Create the new GroupEntry with the calculated timestamp
     final newGroupRef = _entriesRef.doc();
-    final newGroup = Entry.group(
+    final newGroup = GroupEntry(
       createdBy: _uid,
       createdAt: now,
       updatedAt: now,
@@ -118,6 +108,6 @@ class EntryRepository {
 
   Future<Entry> getEntry(String entryId) async {
     final doc = await _entriesRef.doc(entryId).get();
-    return doc.data()!.copyWith(id: doc.id);
+    return doc.data()!;
   }
 }

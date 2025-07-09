@@ -1,6 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
 import 'package:amp/core/models/product.dart';
 import 'package:amp/core/models/product_version.dart';
@@ -9,6 +6,9 @@ import 'package:amp/core/models/units.dart';
 import 'package:amp/features/auth/providers/uid_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final productDetailsProvider =
     FutureProvider.family<(Product, ProductVersion), String>((
@@ -202,7 +202,7 @@ class ProductDetailScreen extends ConsumerWidget {
                       final uid = ref.read(uidProvider);
                       final now = Timestamp.now();
 
-                      final productEntry = Entry.product(
+                      final productEntry = ProductEntry(
                         createdBy: uid,
                         createdAt: now,
                         updatedAt: now,

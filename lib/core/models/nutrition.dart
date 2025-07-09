@@ -1,17 +1,40 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class Nutrition {
+  final double calories;
+  final double protein;
+  final double carbohydrates;
+  final double fat;
 
-part 'nutrition.freezed.dart';
-part 'nutrition.g.dart';
+  Nutrition({
+    required this.calories,
+    required this.protein,
+    required this.carbohydrates,
+    required this.fat,
+  });
 
-@freezed
-abstract class Nutrition with _$Nutrition {
-  const factory Nutrition({
-    required double calories,
-    required double protein,
-    required double carbohydrates,
-    required double fat,
-  }) = _Nutrition;
+  Map<String, dynamic> toMap() {
+    return {
+      'calories': calories,
+      'protein': protein,
+      'carbohydrates': carbohydrates,
+      'fat': fat,
+    };
+  }
 
-  factory Nutrition.fromJson(Map<String, dynamic> json) =>
-      _$NutritionFromJson(json);
+  factory Nutrition.fromMap(Map<String, dynamic> map) {
+    if (map case {
+      'calories': num calories,
+      'protein': num protein,
+      'carbohydrates': num carbohydrates,
+      'fat': num fat,
+    }) {
+      return Nutrition(
+        calories: calories.toDouble(),
+        protein: protein.toDouble(),
+        carbohydrates: carbohydrates.toDouble(),
+        fat: fat.toDouble(),
+      );
+    } else {
+      throw const FormatException('Invalid JSON format for Nutrition');
+    }
+  }
 }

@@ -1,18 +1,45 @@
+import 'package:amp/core/models/product_version.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:amp/core/models/json_converters.dart';
 
-part 'ingredient.freezed.dart';
-part 'ingredient.g.dart';
+class Ingredient {
+  final DocumentReference<ProductVersion> productVersionRef;
+  final double quantity;
+  final String unit;
 
-@freezed
-abstract class Ingredient with _$Ingredient {
-  const factory Ingredient({
-    @DocumentReferenceConverter() required DocumentReference productVersionRef,
-    required double quantity,
-    required String unit,
-  }) = _Ingredient;
+  Ingredient({
+    required this.productVersionRef,
+    required this.quantity,
+    required this.unit,
+  });
 
-  factory Ingredient.fromJson(Map<String, dynamic> json) =>
-      _$IngredientFromJson(json);
+  Map<String, dynamic> toMap() {
+    return {
+      'productVersionRef': productVersionRef,
+      'quantity': quantity,
+      'unit': unit,
+    };
+  }
+
+  factory Ingredient.fromMap(Map<String, dynamic> map) {
+    if (map case {
+      'productVersionRef': DocumentReference productVersionRef,
+      'quantity': num quantity,
+      'unit': String unit,
+    }) {
+      final typedProductVersionRef = productVersionRef
+          .withConverter<ProductVersion>(
+            fromFirestore: (snapshot, _) =>
+                ProductVersion.fromSnapshot(snapshot),
+            toFirestore: (productVersion, _) => productVersion.toMap(),
+          );
+
+      return Ingredient(
+        productVersionRef: typedProductVersionRef,
+        quantity: quantity.toDouble(),
+        unit: unit,
+      );
+    } else {
+      throw const FormatException('Invalid JSON format for Ingredient');
+    }
+  }
 }

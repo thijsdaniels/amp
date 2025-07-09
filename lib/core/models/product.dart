@@ -1,28 +1,48 @@
+import 'package:amp/core/models/document.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:amp/core/models/json_converters.dart';
-import 'package:amp/core/models/base_model.dart';
 
-part 'product.freezed.dart';
-part 'product.g.dart';
+class Product extends Document {
+  final String name;
+  final int latestVersion;
 
-@freezed
-abstract class Product extends BaseModel with _$Product {
-  Product._({
+  Product({
+    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
+    required this.name,
+    required this.latestVersion,
   });
 
-  factory Product({
-    @JsonKey(includeToJson: false, includeFromJson: false) String? id,
-    required String name,
-    required String createdBy,
-    @TimestampConverter() required Timestamp createdAt,
-    @TimestampConverter() required Timestamp updatedAt,
-    required int latestVersion,
-  }) = _Product;
+  Map<String, dynamic> toMap() {
+    return {
+      'createdBy': createdBy,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'name': name,
+      'latestVersion': latestVersion,
+    };
+  }
 
-  factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json);
+  factory Product.fromSnapshot(DocumentSnapshot snapshot) {
+    final data = snapshot.data();
+    if (data case {
+      'createdBy': String createdBy,
+      'createdAt': Timestamp createdAt,
+      'updatedAt': Timestamp updatedAt,
+      'name': String name,
+      'latestVersion': int latestVersion,
+    }) {
+      return Product(
+        id: snapshot.id,
+        createdBy: createdBy,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        name: name,
+        latestVersion: latestVersion,
+      );
+    } else {
+      throw const FormatException('Invalid snapshot data for Product');
+    }
+  }
 }

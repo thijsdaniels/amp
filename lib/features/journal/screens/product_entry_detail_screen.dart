@@ -1,18 +1,7 @@
+import 'package:amp/core/models/entry.dart';
+import 'package:amp/features/journal/providers/entry_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:amp/core/models/entry.dart';
-import 'package:amp/features/journal/providers/entry_repository_provider.dart';
-
-/// @todo This provider is already defined in group_detail_screen, but it's
-/// general enough to be used here as well. We can consider moving it to a
-/// shared location later.
-final singleEntryProvider = FutureProvider.family<Entry, String>((
-  ref,
-  entryId,
-) {
-  final entryRepo = ref.watch(entryRepositoryProvider);
-  return entryRepo.getEntry(entryId);
-});
 
 class ProductEntryDetailScreen extends ConsumerWidget {
   final String entryId;
@@ -32,7 +21,8 @@ class ProductEntryDetailScreen extends ConsumerWidget {
       return _buildView(context, ref, productEntry);
     }
 
-    final entryAsync = ref.watch(singleEntryProvider(entryId));
+    final entryAsync =
+        ref.watch(singleEntryProvider(entryId)) as AsyncValue<ProductEntry>;
 
     return entryAsync.when(
       loading: () => Scaffold(
@@ -43,7 +33,7 @@ class ProductEntryDetailScreen extends ConsumerWidget {
         appBar: AppBar(),
         body: Center(child: Text('Error: $err')),
       ),
-      data: (entryData) => _buildView(context, ref, entryData as ProductEntry),
+      data: (entryData) => _buildView(context, ref, entryData),
     );
   }
 

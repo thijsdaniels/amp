@@ -1,11 +1,22 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class Unit {
+  final String name;
+  final num grams;
 
-part 'unit.freezed.dart';
-part 'unit.g.dart';
+  const Unit({required this.name, required this.grams});
 
-@freezed
-abstract class Unit with _$Unit {
-  const factory Unit({required String name, required num grams}) = _Unit;
+  Map<String, dynamic> toMap() {
+    return {'name': name, 'grams': grams};
+  }
 
-  factory Unit.fromJson(Map<String, dynamic> json) => _$UnitFromJson(json);
+  factory Unit.fromMap(Map<String, dynamic> map) {
+    if (map case {'name': String name, 'grams': num grams}) {
+      return Unit(name: name, grams: grams);
+    } else {
+      throw const FormatException('Invalid JSON format for Unit');
+    }
+  }
+
+  Unit copyWith({String? name, num? grams}) {
+    return Unit(name: name ?? this.name, grams: grams ?? this.grams);
+  }
 }

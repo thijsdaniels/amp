@@ -1,27 +1,48 @@
+import 'package:amp/core/models/document.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:amp/core/models/base_model.dart';
-import 'package:amp/core/models/json_converters.dart';
 
-part 'recipe.freezed.dart';
-part 'recipe.g.dart';
+class Recipe extends Document {
+  final String name;
+  final int latestVersion;
 
-@freezed
-abstract class Recipe extends BaseModel with _$Recipe {
-  Recipe._({
+  Recipe({
+    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
+    required this.name,
+    required this.latestVersion,
   });
 
-  factory Recipe({
-    @JsonKey(includeToJson: false, includeFromJson: false) String? id,
-    required String createdBy,
-    @TimestampConverter() required Timestamp createdAt,
-    @TimestampConverter() required Timestamp updatedAt,
-    required String name,
-    required int latestVersion,
-  }) = _Recipe;
+  Map<String, dynamic> toMap() {
+    return {
+      'createdBy': createdBy,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'name': name,
+      'latestVersion': latestVersion,
+    };
+  }
 
-  factory Recipe.fromJson(Map<String, dynamic> json) => _$RecipeFromJson(json);
+  factory Recipe.fromSnapshot(DocumentSnapshot snapshot) {
+    final data = snapshot.data();
+    if (data case {
+      'createdBy': String createdBy,
+      'createdAt': Timestamp createdAt,
+      'updatedAt': Timestamp updatedAt,
+      'name': String name,
+      'latestVersion': int latestVersion,
+    }) {
+      return Recipe(
+        id: snapshot.id,
+        createdBy: createdBy,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        name: name,
+        latestVersion: latestVersion,
+      );
+    } else {
+      throw const FormatException('Invalid snapshot data for Recipe');
+    }
+  }
 }

@@ -1,32 +1,57 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:amp/core/models/base_model.dart';
-import 'package:amp/core/models/json_converters.dart';
+import 'package:amp/core/models/document.dart';
 import 'package:amp/core/models/nutrition.dart';
 import 'package:amp/core/models/unit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-part 'product_version.freezed.dart';
-part 'product_version.g.dart';
+class ProductVersion extends Document {
+  final int version;
+  final Nutrition nutrition;
+  final List<Unit> units;
 
-@freezed
-abstract class ProductVersion extends BaseModel with _$ProductVersion {
-  ProductVersion._({
+  ProductVersion({
+    super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
+    required this.version,
+    required this.nutrition,
+    required this.units,
   });
 
-  @JsonSerializable(explicitToJson: true)
-  factory ProductVersion({
-    @JsonKey(includeToJson: false, includeFromJson: false) String? id,
-    required String createdBy,
-    @TimestampConverter() required Timestamp createdAt,
-    @TimestampConverter() required Timestamp updatedAt,
-    required int version,
-    required Nutrition nutrition,
-    required List<Unit> units,
-  }) = _ProductVersion;
+  Map<String, dynamic> toMap() {
+    return {
+      'createdBy': createdBy,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'version': version,
+      'nutrition': nutrition.toMap(),
+      'units': units.map((unit) => unit.toMap()).toList(),
+    };
+  }
 
-  factory ProductVersion.fromJson(Map<String, dynamic> json) =>
-      _$ProductVersionFromJson(json);
+  factory ProductVersion.fromSnapshot(DocumentSnapshot snapshot) {
+    final data = snapshot.data();
+    if (data case {
+      'createdBy': String createdBy,
+      'createdAt': Timestamp createdAt,
+      'updatedAt': Timestamp updatedAt,
+      'version': int version,
+      'nutrition': Map<String, dynamic> nutritionMap,
+      'units': List<dynamic> unitsList,
+    }) {
+      return ProductVersion(
+        id: snapshot.id,
+        createdBy: createdBy,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+        version: version,
+        nutrition: Nutrition.fromMap(nutritionMap),
+        units: unitsList
+            .map((unitMap) => Unit.fromMap(unitMap as Map<String, dynamic>))
+            .toList(),
+      );
+    } else {
+      throw const FormatException('Invalid snapshot data for ProductVersion');
+    }
+  }
 }
