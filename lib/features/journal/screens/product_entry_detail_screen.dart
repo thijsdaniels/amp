@@ -1,5 +1,5 @@
 import 'package:amp/core/models/entry.dart';
-import 'package:amp/features/journal/providers/entry_providers.dart';
+import 'package:amp/features/journal/providers/single_entry_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

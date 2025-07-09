@@ -1,27 +1,12 @@
 import 'package:amp/core/models/entry.dart';
-import 'package:amp/features/journal/providers/entry_repository_provider.dart';
+import 'package:amp/features/journal/providers/entries_by_parent_provider.dart';
+import 'package:amp/features/journal/providers/single_entry_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
-
-final groupChildrenProvider = StreamProvider.family<List<Entry>, String>((
-  ref,
-  groupId,
-) {
-  final entryRepo = ref.watch(entryRepositoryProvider);
-  return entryRepo.getEntriesByParentIdStream(groupId);
-});
-
-final singleEntryProvider = FutureProvider.family<Entry, String>((
-  ref,
-  entryId,
-) {
-  final entryRepo = ref.watch(entryRepositoryProvider);
-  return entryRepo.getEntry(entryId);
-});
 
 class GroupEntryDetailScreen extends ConsumerWidget {
   final String entryId;
@@ -53,7 +38,7 @@ class GroupEntryDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildView(BuildContext context, WidgetRef ref, GroupEntry group) {
-    final childrenAsync = ref.watch(groupChildrenProvider(group.id!));
+    final childrenAsync = ref.watch(entriesByParentProvider(group.id!));
     return Scaffold(
       appBar: AppBar(title: Text(group.name)),
       body: childrenAsync.when(

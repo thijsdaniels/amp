@@ -3,7 +3,7 @@ import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Fetches a single entry document by its ID.
-final singleEntryProvider = FutureProvider.family<Entry, String>((
+final singleEntryProvider = FutureProvider.autoDispose.family<Entry, String>((
   ref,
   entryId,
 ) {

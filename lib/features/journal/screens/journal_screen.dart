@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/features/journal/providers/entries_by_day_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
-
-final journalEntriesProvider = StreamProvider<List<Entry>>((ref) {
-  final entryRepo = ref.watch(entryRepositoryProvider);
-  // For now, we fetch for the current day.
-  // This could be enhanced later with a date picker.
-  return entryRepo.getEntriesStream(DateTime.now());
-});
 
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
@@ -27,7 +21,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final entriesAsync = ref.watch(journalEntriesProvider);
+    final entriesAsync = ref.watch(entriesByDayProvider(DateTime.now()));
 
     return Scaffold(
       appBar: _buildAppBar(),
