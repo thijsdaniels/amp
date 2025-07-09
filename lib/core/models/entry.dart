@@ -3,42 +3,43 @@ import 'package:amp/core/models/product_version.dart';
 import 'package:amp/core/models/recipe_version.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum EntryType { group, product, recipe }
+
 sealed class Entry extends Document {
   final Timestamp occurredAt;
   final DocumentReference<Entry>? parentRef;
+  final EntryType type;
 
-  Entry({
+  const Entry({
     super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
+    required this.type,
     required this.occurredAt,
     this.parentRef,
   });
 
   factory Entry.fromSnapshot(DocumentSnapshot snapshot) {
     final map = snapshot.data() as Map<String, dynamic>;
-    final type = map['type'];
+    final typeString = map['type'] as String;
+    final type = EntryType.values.byName(typeString);
 
     switch (type) {
-      case 'GROUP':
+      case EntryType.group:
         return GroupEntry.fromMap(map, snapshot.id);
-      case 'PRODUCT':
+      case EntryType.product:
         return ProductEntry.fromMap(map, snapshot.id);
-      case 'RECIPE':
+      case EntryType.recipe:
         return RecipeEntry.fromMap(map, snapshot.id);
-      default:
-        throw Exception('Unknown Entry type: $type');
     }
   }
-
-  Map<String, dynamic> toMap();
 }
 
 class GroupEntry extends Entry {
   final String name;
 
-  GroupEntry({
+  const GroupEntry({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -46,12 +47,12 @@ class GroupEntry extends Entry {
     required super.occurredAt,
     super.parentRef,
     required this.name,
-  });
+  }) : super(type: EntryType.group);
 
   @override
   Map<String, dynamic> toMap() {
     return {
-      'type': 'GROUP',
+      'type': type.name,
       'createdBy': createdBy,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -96,7 +97,7 @@ class ProductEntry extends Entry {
   final double quantity;
   final String unit;
 
-  ProductEntry({
+  const ProductEntry({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -107,12 +108,12 @@ class ProductEntry extends Entry {
     required this.name,
     required this.quantity,
     required this.unit,
-  });
+  }) : super(type: EntryType.product);
 
   @override
   Map<String, dynamic> toMap() {
     return {
-      'type': 'PRODUCT',
+      'type': type.name,
       'createdBy': createdBy,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -173,7 +174,7 @@ class RecipeEntry extends Entry {
   final double quantity;
   final String unit;
 
-  RecipeEntry({
+  const RecipeEntry({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -184,12 +185,12 @@ class RecipeEntry extends Entry {
     required this.name,
     required this.quantity,
     required this.unit,
-  });
+  }) : super(type: EntryType.recipe);
 
   @override
   Map<String, dynamic> toMap() {
     return {
-      'type': 'RECIPE',
+      'type': type.name,
       'createdBy': createdBy,
       'createdAt': createdAt,
       'updatedAt': updatedAt,

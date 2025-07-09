@@ -10,7 +10,7 @@ class RecipeVersion extends Document {
   final List<Unit> units;
   final List<Ingredient> ingredients;
 
-  RecipeVersion({
+  const RecipeVersion({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -21,6 +21,7 @@ class RecipeVersion extends Document {
     required this.ingredients,
   });
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'createdBy': createdBy,

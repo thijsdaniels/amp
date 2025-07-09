@@ -2,7 +2,7 @@ import 'package:amp/core/models/entry.dart';
 import 'package:amp/core/models/product.dart';
 import 'package:amp/core/models/product_version.dart';
 import 'package:amp/core/models/unit.dart';
-import 'package:amp/core/models/units.dart';
+import 'package:amp/core/utilities/units.dart';
 import 'package:amp/features/auth/providers/uid_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';

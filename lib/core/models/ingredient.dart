@@ -1,17 +1,19 @@
+import 'package:amp/core/models/model.dart';
 import 'package:amp/core/models/product_version.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Ingredient {
+class Ingredient extends Model {
   final DocumentReference<ProductVersion> productVersionRef;
   final double quantity;
   final String unit;
 
-  Ingredient({
+  const Ingredient({
     required this.productVersionRef,
     required this.quantity,
     required this.unit,
   });
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'productVersionRef': productVersionRef,

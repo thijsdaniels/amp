@@ -45,12 +45,7 @@ class EntryRepository {
   }
 
   Future<void> deleteEntry(String entryId) async {
-    try {
-      await _entriesRef.doc(entryId).delete();
-    } catch (e) {
-      print('Error deleting entry: $e');
-      rethrow;
-    }
+    await _entriesRef.doc(entryId).delete();
   }
 
   Future<void> groupEntries(List<String> entryIds, String name) async {
@@ -97,13 +92,7 @@ class EntryRepository {
   }
 
   Future<DocumentReference<Entry>> addEntry(Entry entry) async {
-    try {
-      final docRef = await _entriesRef.add(entry);
-      return docRef;
-    } catch (e) {
-      print('Error adding entry: $e');
-      rethrow;
-    }
+    return _entriesRef.add(entry);
   }
 
   Future<Entry> getEntry(String entryId) async {

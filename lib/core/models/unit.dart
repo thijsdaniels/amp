@@ -1,9 +1,12 @@
-class Unit {
+import 'package:amp/core/models/model.dart';
+
+class Unit extends Model {
   final String name;
   final num grams;
 
   const Unit({required this.name, required this.grams});
 
+  @override
   Map<String, dynamic> toMap() {
     return {'name': name, 'grams': grams};
   }

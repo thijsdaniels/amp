@@ -5,7 +5,7 @@ class Product extends Document {
   final String name;
   final int latestVersion;
 
-  Product({
+  const Product({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -14,6 +14,7 @@ class Product extends Document {
     required this.latestVersion,
   });
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'createdBy': createdBy,

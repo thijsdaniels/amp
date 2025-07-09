@@ -8,7 +8,7 @@ class ProductVersion extends Document {
   final Nutrition nutrition;
   final List<Unit> units;
 
-  ProductVersion({
+  const ProductVersion({
     super.id,
     required super.createdBy,
     required super.createdAt,
@@ -18,6 +18,7 @@ class ProductVersion extends Document {
     required this.units,
   });
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'createdBy': createdBy,

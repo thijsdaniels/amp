@@ -1,16 +1,19 @@
-class Nutrition {
+import 'package:amp/core/models/model.dart';
+
+class Nutrition extends Model {
   final double calories;
   final double protein;
   final double carbohydrates;
   final double fat;
 
-  Nutrition({
+  const Nutrition({
     required this.calories,
     required this.protein,
     required this.carbohydrates,
     required this.fat,
   });
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'calories': calories,
