@@ -32,6 +32,7 @@ class ProductVersion extends Document {
 
   factory ProductVersion.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data();
+
     if (data case {
       'createdBy': String createdBy,
       'createdAt': Timestamp createdAt,

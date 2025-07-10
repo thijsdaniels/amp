@@ -1,5 +1,7 @@
 import 'package:amp/core/models/entry.dart';
 import 'package:amp/features/journal/providers/single_entry_provider.dart';
+import 'package:amp/features/journal/widgets/nutrition_table.dart';
+import 'package:amp/features/products/providers/product_version_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,6 +44,10 @@ class ProductEntryDetailScreen extends ConsumerWidget {
     WidgetRef ref,
     ProductEntry productEntry,
   ) {
+    final productVersionAsync = ref.watch(
+      productVersionProvider(productEntry.productVersionRef),
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(productEntry.name)),
       body: Padding(
@@ -50,7 +56,21 @@ class ProductEntryDetailScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Quantity: ${productEntry.quantity} ${productEntry.unit}'),
-            // @todo We can add more details like nutrition later
+            productVersionAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+              data: (productVersion) {
+                final nutrition = productVersion.nutrition;
+
+                final consumedNutrition =
+                    (nutrition / 100) * productEntry.quantity;
+
+                return NutritionTable(
+                  title: 'Consumed Nutrition',
+                  nutrition: consumedNutrition,
+                );
+              },
+            ),
           ],
         ),
       ),

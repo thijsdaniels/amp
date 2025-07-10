@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
 import 'package:amp/features/journal/providers/entries_by_day_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
+import 'package:amp/features/journal/providers/selected_date_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
@@ -21,7 +22,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final entriesAsync = ref.watch(entriesByDayProvider(DateTime.now()));
+    final selectedDate = ref.watch(selectedDateProvider);
+    final entriesAsync = ref.watch(entriesByDayProvider(selectedDate));
 
     return Scaffold(
       appBar: _buildAppBar(),

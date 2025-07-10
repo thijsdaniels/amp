@@ -13,6 +13,42 @@ class Nutrition extends Model {
     required this.fat,
   });
 
+  Nutrition operator +(Nutrition other) {
+    return Nutrition(
+      calories: calories + other.calories,
+      protein: protein + other.protein,
+      carbohydrates: carbohydrates + other.carbohydrates,
+      fat: fat + other.fat,
+    );
+  }
+
+  Nutrition operator -(Nutrition other) {
+    return Nutrition(
+      calories: calories - other.calories,
+      protein: protein - other.protein,
+      carbohydrates: carbohydrates - other.carbohydrates,
+      fat: fat - other.fat,
+    );
+  }
+
+  Nutrition operator *(num factor) {
+    return Nutrition(
+      calories: calories * factor,
+      protein: protein * factor,
+      carbohydrates: carbohydrates * factor,
+      fat: fat * factor,
+    );
+  }
+
+  Nutrition operator /(num factor) {
+    return Nutrition(
+      calories: calories / factor,
+      protein: protein / factor,
+      carbohydrates: carbohydrates / factor,
+      fat: fat / factor,
+    );
+  }
+
   @override
   Map<String, dynamic> toMap() {
     return {

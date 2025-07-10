@@ -2,9 +2,10 @@
 
 ## Selected
 
-- [ ] Show consumed nutrition on product entry detail screen
-- [ ] Check if we can refactor anything to improve code quality and sustainability
 - [ ] Support editing products
+- [ ] Display "outdated" flag on product entry list items
+- [ ] Support updating product version on product entry detail screen
+- [ ] Check if we can refactor anything to improve code quality and sustainability
 - [ ] Support editing product consumption entries
 - [ ] Replace products list with a search UI, likely using Algolia
 - [ ] Implement Recipe creation with product ingredients
@@ -37,6 +38,7 @@
 
 ## Done
 
+- [x] Show consumed nutrition on product entry detail screen
 - [x] Create product entry detail screen
 - [x] Update journal screen to support rendering group entries
 - [x] update journal screen to only show root entries
