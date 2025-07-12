@@ -1,30 +1,27 @@
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/models/product.dart';
+import 'package:amp/core/models/product_version.dart';
+import 'package:amp/core/models/unit.dart';
+import 'package:amp/core/utilities/units.dart';
+import 'package:amp/features/journal/providers/entry_product_details_provider.dart';
+import 'package:amp/features/journal/providers/entry_repository_provider.dart';
+import 'package:amp/features/journal/providers/product_entry_provider.dart';
 import 'package:amp/features/journal/providers/single_entry_provider.dart';
 import 'package:amp/features/journal/widgets/nutrition_table.dart';
-import 'package:amp/features/products/providers/product_version_provider.dart';
+import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ProductEntryDetailScreen extends ConsumerWidget {
   final String entryId;
-  final ProductEntry? entry;
 
-  const ProductEntryDetailScreen({
-    super.key,
-    required this.entryId,
-    this.entry,
-  });
+  const ProductEntryDetailScreen({super.key, required this.entryId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productEntry = entry;
-
-    if (productEntry != null) {
-      return _buildView(context, ref, productEntry);
-    }
-
-    final entryAsync =
-        ref.watch(singleEntryProvider(entryId)) as AsyncValue<ProductEntry>;
+    final entryAsync = ref.watch(productEntryProvider(entryId));
 
     return entryAsync.when(
       loading: () => Scaffold(
@@ -35,45 +32,212 @@ class ProductEntryDetailScreen extends ConsumerWidget {
         appBar: AppBar(),
         body: Center(child: Text('Error: $err')),
       ),
-      data: (entryData) => _buildView(context, ref, entryData),
-    );
-  }
+      data: (productEntry) {
+        final detailsAsync = ref.watch(
+          entryProductDetailsProvider(productEntry),
+        );
 
-  Widget _buildView(
-    BuildContext context,
-    WidgetRef ref,
-    ProductEntry productEntry,
-  ) {
-    final productVersionAsync = ref.watch(
-      productVersionProvider(productEntry.productVersionRef),
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: Text(productEntry.name)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Quantity: ${productEntry.quantity} ${productEntry.unit}'),
-            productVersionAsync.when(
+        return Scaffold(
+          appBar: AppBar(title: Text(productEntry.name)),
+          body: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: detailsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
-              data: (productVersion) {
+              data: (details) {
+                final (product, productVersion) = details;
+                final isOutdated =
+                    product.latestVersion > productVersion.version;
+
                 final nutrition = productVersion.nutrition;
+                Unit? unit = _getUnit(productEntry, productVersion);
+
+                if (unit == null) {
+                  return Center(
+                    child: Text(
+                      'Error: The unit "${productEntry.unit}" was not found for this product.',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
 
                 final consumedNutrition =
-                    (nutrition / 100) * productEntry.quantity;
+                    (nutrition / 100) * productEntry.quantity * unit.grams;
 
-                return NutritionTable(
-                  title: 'Consumed Nutrition',
-                  nutrition: consumedNutrition,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Quantity: ${productEntry.quantity} ${unit.name}'),
+                    if (isOutdated) ...[
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => _onUpdatePressed(
+                          context,
+                          ref,
+                          product,
+                          productEntry,
+                          productVersion,
+                        ),
+                        child: const Text('Update'),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Consumed Nutrition',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    NutritionTable(nutrition: consumedNutrition),
+                  ],
                 );
               },
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<(Unit, double)?> _showUnitSelectionDialog(
+    BuildContext context,
+    List<Unit> availableUnits,
+    double originalQuantity,
+  ) {
+    return showDialog<(Unit, double)?>(
+      context: context,
+      builder: (context) {
+        final formKey = GlobalKey<FormBuilderState>();
+        Unit? selectedUnit;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Unit not found'),
+              content: FormBuilder(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'The original unit for this entry is no longer available. Please select a new unit and confirm the quantity.',
+                    ),
+                    const SizedBox(height: 24),
+                    FormBuilderTextField(
+                      name: 'quantity',
+                      initialValue: originalQuantity.toString(),
+                      decoration: const InputDecoration(
+                        labelText: 'Quantity',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null ||
+                            double.tryParse(value) == null ||
+                            double.parse(value) <= 0) {
+                          return 'Please enter a valid quantity.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    ...availableUnits.map(
+                      (unit) => RadioListTile<Unit>(
+                        title: Text(unit.name),
+                        value: unit,
+                        groupValue: selectedUnit,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedUnit = value;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selectedUnit != null &&
+                        formKey.currentState!.saveAndValidate()) {
+                      final newQuantity = double.parse(
+                        formKey.currentState!.value['quantity'],
+                      );
+                      Navigator.of(context).pop((selectedUnit!, newQuantity));
+                    }
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _onUpdatePressed(
+    BuildContext context,
+    WidgetRef ref,
+    Product product,
+    ProductEntry productEntry,
+    ProductVersion productVersion,
+  ) async {
+    final productRepo = ref.read(productRepositoryProvider);
+    final entryRepo = ref.read(entryRepositoryProvider);
+
+    final latestVersion = await productRepo.getLatestProductVersion(
+      product.id!,
+    );
+
+    final currentUnit = _getUnit(productEntry, productVersion);
+
+    final newUnit = latestVersion.units.firstWhereOrNull(
+      (u) => u.name == currentUnit?.name,
+    );
+
+    if (newUnit != null) {
+      // Unit still exists, update directly
+      await entryRepo.updateProductEntryToNewVersion(
+        productEntry.id!,
+        product.name,
+        productRepo.getProductVersionRef(product.id!, latestVersion.id!),
+      );
+    } else {
+      // Unit does not exist, show dialog
+      if (!context.mounted) return;
+      final selectedUnitAndQuantity = await _showUnitSelectionDialog(
+        context,
+        latestVersion.units,
+        productEntry.quantity,
+      );
+      if (selectedUnitAndQuantity != null) {
+        final (selectedUnit, newQuantity) = selectedUnitAndQuantity;
+        await entryRepo.updateProductEntryWithNewUnit(
+          productEntry.id!,
+          product.name,
+          productRepo.getProductVersionRef(product.id!, latestVersion.id!),
+          selectedUnit.name,
+          newQuantity,
+        );
+      }
+    }
+    ref.invalidate(entryProductDetailsProvider(productEntry));
+    ref.invalidate(singleEntryProvider(entryId));
+  }
+
+  Unit? _getUnit(ProductEntry productEntry, ProductVersion productVersion) {
+    if (productEntry.unit == Units.gram.name) {
+      return Units.gram;
+    }
+
+    return productVersion.units.firstWhereOrNull(
+      (unit) => unit.name == productEntry.unit,
     );
   }
 }

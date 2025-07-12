@@ -34,6 +34,8 @@ sealed class Entry extends Document {
         return RecipeEntry.fromMap(map, snapshot.id);
     }
   }
+
+  Entry copyWith();
 }
 
 class GroupEntry extends Entry {
@@ -88,6 +90,27 @@ class GroupEntry extends Entry {
     } else {
       throw const FormatException('Invalid JSON format for GroupEntry');
     }
+  }
+
+  @override
+  GroupEntry copyWith({
+    String? id,
+    String? createdBy,
+    Timestamp? createdAt,
+    Timestamp? updatedAt,
+    Timestamp? occurredAt,
+    DocumentReference<Entry>? parentRef,
+    String? name,
+  }) {
+    return GroupEntry(
+      id: id ?? this.id,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      occurredAt: occurredAt ?? this.occurredAt,
+      parentRef: parentRef ?? this.parentRef,
+      name: name ?? this.name,
+    );
   }
 }
 
@@ -166,6 +189,33 @@ class ProductEntry extends Entry {
       throw const FormatException('Invalid JSON format for ProductEntry');
     }
   }
+
+  @override
+  ProductEntry copyWith({
+    String? id,
+    String? createdBy,
+    Timestamp? createdAt,
+    Timestamp? updatedAt,
+    Timestamp? occurredAt,
+    DocumentReference<Entry>? parentRef,
+    DocumentReference<ProductVersion>? productVersionRef,
+    String? name,
+    double? quantity,
+    String? unit,
+  }) {
+    return ProductEntry(
+      id: id ?? this.id,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      occurredAt: occurredAt ?? this.occurredAt,
+      parentRef: parentRef ?? this.parentRef,
+      productVersionRef: productVersionRef ?? this.productVersionRef,
+      name: name ?? this.name,
+      quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
+    );
+  }
 }
 
 class RecipeEntry extends Entry {
@@ -242,5 +292,32 @@ class RecipeEntry extends Entry {
     } else {
       throw const FormatException('Invalid JSON format for RecipeEntry');
     }
+  }
+
+  @override
+  RecipeEntry copyWith({
+    String? id,
+    String? createdBy,
+    Timestamp? createdAt,
+    Timestamp? updatedAt,
+    Timestamp? occurredAt,
+    DocumentReference<Entry>? parentRef,
+    DocumentReference<RecipeVersion>? recipeVersionRef,
+    String? name,
+    double? quantity,
+    String? unit,
+  }) {
+    return RecipeEntry(
+      id: id ?? this.id,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      occurredAt: occurredAt ?? this.occurredAt,
+      parentRef: parentRef ?? this.parentRef,
+      recipeVersionRef: recipeVersionRef ?? this.recipeVersionRef,
+      name: name ?? this.name,
+      quantity: quantity ?? this.quantity,
+      unit: unit ?? this.unit,
+    );
   }
 }

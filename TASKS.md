@@ -2,9 +2,9 @@
 
 ## Selected
 
-- [ ] Support editing products
-- [ ] Display "outdated" flag on product entry list items
-- [ ] Support updating product version on product entry detail screen
+- [x] Support editing products
+- [x] Fix bug in nutrition calculation on product entry detail screen: nutrition is multiplied by quantity, but that quantity may not be in grams (e.g. it might be "1 pieces"), in which case it still needs to be multiplied by the unit's weight in grams as well.
+- [x] Support updating product version on product entry detail screen
 - [ ] Check if we can refactor anything to improve code quality and sustainability
 - [ ] Support editing product consumption entries
 - [ ] Replace products list with a search UI, likely using Algolia
@@ -17,6 +17,7 @@
 
 ## Backlog
 
+- [ ] Add a unique key to the ProductVersion.units, and use that key to lookup the unit in the ProductEntry.unit field instead of the name.
 - [ ] Update journal screen to show nested entries in some way
 - [ ] Add support for logging measurements (e.g., weight, body fat) as a new Entry type
 - [ ] Implement Journal date picker to view past dates
@@ -35,6 +36,7 @@
 - [ ] Support opting in to other users as product sources
 - [ ] Graphs and trends for calories, macros, expenditure, etc.
 - [ ] Configurable target calories and macros for the day
+- [ ] Consider displaying an "outdated" flag on product entry list items, keeping in mind that this would require two additional queries for each list item
 
 ## Done
 

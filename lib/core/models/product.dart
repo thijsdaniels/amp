@@ -25,8 +25,27 @@ class Product extends Document {
     };
   }
 
+  Product copyWith({
+    String? id,
+    String? createdBy,
+    Timestamp? createdAt,
+    Timestamp? updatedAt,
+    String? name,
+    int? latestVersion,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      latestVersion: latestVersion ?? this.latestVersion,
+    );
+  }
+
   factory Product.fromSnapshot(DocumentSnapshot snapshot) {
     final data = snapshot.data();
+
     if (data case {
       'createdBy': String createdBy,
       'createdAt': Timestamp createdAt,

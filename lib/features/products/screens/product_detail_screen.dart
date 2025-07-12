@@ -5,28 +5,12 @@ import 'package:amp/core/models/unit.dart';
 import 'package:amp/core/utilities/units.dart';
 import 'package:amp/features/auth/providers/uid_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
+import 'package:amp/features/products/providers/product_details_provider.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final productDetailsProvider =
-    FutureProvider.family<(Product, ProductVersion), String>((
-      ref,
-      productId,
-    ) async {
-      final productRepo = ref.watch(productRepositoryProvider);
-      // Fetch both in parallel for efficiency
-      final productFuture = productRepo.getProduct(productId);
-      final productVersionFuture = productRepo.getLatestProductVersion(
-        productId,
-      );
-
-      final product = await productFuture;
-      final productVersion = await productVersionFuture;
-
-      return (product, productVersion);
-    });
+import 'package:go_router/go_router.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   final String productId;
@@ -38,7 +22,21 @@ class ProductDetailScreen extends ConsumerWidget {
     final productDetailsAsync = ref.watch(productDetailsProvider(productId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Details')),
+      appBar: AppBar(
+        title: const Text('Product Details'),
+        actions: [
+          productDetailsAsync.when(
+            data: (_) => IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                context.push('/products/$productId/edit');
+              },
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: productDetailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),

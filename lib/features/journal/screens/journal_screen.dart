@@ -138,13 +138,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   void _onListItemTapped(Entry entry) {
     switch (entry) {
       case GroupEntry():
-        context.push('/journal/group/${entry.id}', extra: entry);
+        context.push('/journal/group/${entry.id}');
         break;
       case ProductEntry():
-        context.push('/journal/product/${entry.id}', extra: entry);
+        context.push('/journal/product/${entry.id}');
         break;
       case RecipeEntry():
-        context.push('/journal/recipe/${entry.id}', extra: entry);
+        context.push('/journal/recipe/${entry.id}');
         break;
     }
   }

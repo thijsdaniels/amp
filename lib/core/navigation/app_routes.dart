@@ -1,9 +1,9 @@
-import 'package:amp/core/models/entry.dart';
 import 'package:amp/core/screens/main_screen.dart';
 import 'package:amp/features/journal/screens/group_entry_detail_screen.dart';
 import 'package:amp/features/journal/screens/journal_screen.dart';
 import 'package:amp/features/journal/screens/product_entry_detail_screen.dart';
 import 'package:amp/features/products/screens/add_product_screen.dart';
+import 'package:amp/features/products/screens/edit_product_screen.dart';
 import 'package:amp/features/products/screens/product_detail_screen.dart';
 import 'package:amp/features/products/screens/products_screen.dart';
 import 'package:flutter/material.dart';
@@ -23,24 +23,21 @@ final List<RouteBase> appRoutes = [
             path: '/group/:entryId',
             builder: (context, state) {
               final entryId = state.pathParameters['entryId']!;
-              final entry = state.extra as GroupEntry?;
-              return GroupEntryDetailScreen(entryId: entryId, entry: entry);
+              return GroupEntryDetailScreen(entryId: entryId);
             },
           ),
           GoRoute(
             path: '/product/:entryId',
             builder: (context, state) {
               final entryId = state.pathParameters['entryId']!;
-              final entry = state.extra as ProductEntry?;
-              return ProductEntryDetailScreen(entryId: entryId, entry: entry);
+              return ProductEntryDetailScreen(entryId: entryId);
             },
           ),
           // GoRoute(
           //   path: '/recipe/:entryId',
           //   builder: (context, state) {
           //     final entryId = state.pathParameters['entryId']!;
-          //     final entry = state.extra as RecipeEntry?;
-          //     return RecipeEntryDetailScreen(entryId: entryId, entry: entry);
+          //     return RecipeEntryDetailScreen(entryId: entryId);
           //   },
           // ),
         ],
@@ -59,6 +56,15 @@ final List<RouteBase> appRoutes = [
               final productId = state.pathParameters['productId']!;
               return ProductDetailScreen(productId: productId);
             },
+            routes: [
+              GoRoute(
+                path: 'edit',
+                builder: (context, state) {
+                  final productId = state.pathParameters['productId']!;
+                  return EditProductScreen(productId: productId);
+                },
+              ),
+            ],
           ),
         ],
       ),

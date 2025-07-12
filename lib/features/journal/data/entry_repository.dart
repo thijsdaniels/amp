@@ -1,4 +1,5 @@
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/models/product_version.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EntryRepository {
@@ -46,6 +47,52 @@ class EntryRepository {
 
   Future<void> deleteEntry(String entryId) async {
     await _entriesRef.doc(entryId).delete();
+  }
+
+  Future<void> _updateEntry(Entry entry) async {
+    if (entry.id == null) {
+      throw ArgumentError('Entry must have an ID to be updated.');
+    }
+    final data = entry.toMap();
+
+    // Ensure immutable fields are not updated
+    data.remove('createdBy');
+    data.remove('createdAt');
+
+    // Set the update timestamp
+    data['updatedAt'] = Timestamp.now();
+
+    await _entriesRef.doc(entry.id!).update(data);
+  }
+
+  Future<void> updateProductEntryToNewVersion(
+    String entryId,
+    String newName,
+    DocumentReference<ProductVersion> newVersionRef,
+  ) async {
+    final originalEntry = await getEntry(entryId) as ProductEntry;
+    final updatedEntry = originalEntry.copyWith(
+      name: newName,
+      productVersionRef: newVersionRef,
+    );
+    await _updateEntry(updatedEntry);
+  }
+
+  Future<void> updateProductEntryWithNewUnit(
+    String entryId,
+    String newName,
+    DocumentReference<ProductVersion> newVersionRef,
+    String newUnit,
+    double newQuantity,
+  ) async {
+    final originalEntry = await getEntry(entryId) as ProductEntry;
+    final updatedEntry = originalEntry.copyWith(
+      name: newName,
+      productVersionRef: newVersionRef,
+      unit: newUnit,
+      quantity: newQuantity,
+    );
+    await _updateEntry(updatedEntry);
   }
 
   Future<void> groupEntries(List<String> entryIds, String name) async {

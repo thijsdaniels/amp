@@ -70,6 +70,51 @@ class ProductRepository {
     await batch.commit();
   }
 
+  Future<void> createNewProductVersion({
+    required String productId,
+    required String name,
+    required Nutrition nutrition,
+    required List<Unit> units,
+  }) async {
+    final originalProduct = await getProduct(productId);
+    final now = Timestamp.now();
+    final newVersionNumber = originalProduct.latestVersion + 1;
+
+    final updatedProduct = originalProduct.copyWith(
+      name: name,
+      latestVersion: newVersionNumber,
+      updatedAt: now,
+    );
+
+    final newVersion = ProductVersion(
+      createdBy: _uid,
+      createdAt: now,
+      updatedAt: now,
+      version: newVersionNumber,
+      nutrition: nutrition,
+      units: units,
+    );
+
+    await _updateProduct(product: updatedProduct, version: newVersion);
+  }
+
+  Future<void> _updateProduct({
+    required Product product,
+    required ProductVersion version,
+  }) async {
+    assert(product.id != null, 'Product ID cannot be null when updating.');
+
+    final batch = _firestore.batch();
+
+    final productRef = _productsRef.doc(product.id);
+    final versionRef = _productVersionsRef(product.id!).doc();
+
+    batch.update(productRef, product.toMap());
+    batch.set(versionRef, version);
+
+    await batch.commit();
+  }
+
   Stream<List<Product>> getProductsStream() {
     return _productsRef.orderBy('name').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) => doc.data()).toList();
@@ -79,6 +124,13 @@ class ProductRepository {
   Future<Product> getProduct(String productId) async {
     final doc = await _productsRef.doc(productId).get();
     return doc.data()!;
+  }
+
+  Stream<Product> getProductStream(String productId) {
+    return _productsRef
+        .doc(productId)
+        .snapshots()
+        .map((snapshot) => snapshot.data()!);
   }
 
   Future<ProductVersion> getLatestProductVersion(String productId) async {
