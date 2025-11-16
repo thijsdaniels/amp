@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amp/core/providers/selection_provider.dart';
 import 'package:amp/core/widgets/delete_selection_dialog.dart';
 import 'package:amp/core/widgets/selection_app_bar.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';
@@ -20,13 +21,25 @@ class ProductsScreen extends ConsumerWidget {
         selectionActions: [
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (context) => DeleteSelectionDialog(
-                onDelete: (ids) =>
-                    ref.read(productRepositoryProvider).deleteProducts(ids),
-              ),
-            ),
+            onPressed: () {
+              final selectionState = ref.read(selectionProvider);
+              final selectedIds = selectionState.selectedIds.toList();
+              productsAsyncValue.whenData((products) {
+                final selectedProducts = products
+                    .where((product) => selectedIds.contains(product.id))
+                    .toList();
+                showDialog(
+                  context: context,
+                  builder: (context) => DeleteSelectionDialog(
+                    onDelete: (ids) async {
+                      await ref.read(productRepositoryProvider).deleteProducts(ids);
+                      ref.read(selectionProvider.notifier).clear();
+                    },
+                    items: selectedProducts,
+                  ),
+                );
+              });
+            },
           ),
         ],
       ),

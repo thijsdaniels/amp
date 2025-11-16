@@ -39,59 +39,74 @@ class ProductEntryDetailScreen extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(title: Text(productEntry.name)),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: detailsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-              data: (details) {
-                final (product, productVersion) = details;
-                final isOutdated =
-                    product.latestVersion > productVersion.version;
+          body: detailsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+            data: (details) {
+              final (product, productVersion) = details;
+              final isOutdated =
+                  product.latestVersion > productVersion.version;
 
-                final nutrition = productVersion.nutrition;
-                Unit? unit = _getUnit(productEntry, productVersion);
+              final nutrition = productVersion.nutrition;
+              Unit? unit = _getUnit(productEntry, productVersion);
 
-                if (unit == null) {
-                  return Center(
-                    child: Text(
-                      'Error: The unit "${productEntry.unit}" was not found for this product.',
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-
-                final consumedNutrition =
-                    (nutrition / 100) * productEntry.quantity * unit.grams;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Quantity: ${productEntry.quantity} ${unit.name}'),
-                    if (isOutdated) ...[
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => _onUpdatePressed(
-                          context,
-                          ref,
-                          product,
-                          productEntry,
-                          productVersion,
-                        ),
-                        child: const Text('Update'),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Text(
-                      'Consumed Nutrition',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    NutritionTable(nutrition: consumedNutrition),
-                  ],
+              if (unit == null) {
+                return Center(
+                  child: Text(
+                    'Error: The unit "${productEntry.unit}" was not found for this product.',
+                    textAlign: TextAlign.center,
+                  ),
                 );
-              },
-            ),
+              }
+
+              final consumedNutrition =
+                  (nutrition / 100) * productEntry.quantity * unit.grams;
+
+              return Column(
+                children: [
+                  if (isOutdated)
+                    MaterialBanner(
+                      content: const Text(
+                        'This entry uses an older version of the product. Update to the latest version?',
+                      ),
+                      leading: const Icon(Icons.info_outline),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            _onUpdatePressed(
+                              context,
+                              ref,
+                              entryId,
+                              product,
+                              productEntry,
+                              productVersion,
+                            );
+                          },
+                          child: const Text('Update'),
+                        ),
+                      ],
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Quantity: ${productEntry.quantity} ${unit.name}'),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Consumed Nutrition',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          NutritionTable(nutrition: consumedNutrition),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         );
       },
@@ -184,6 +199,7 @@ class ProductEntryDetailScreen extends ConsumerWidget {
   void _onUpdatePressed(
     BuildContext context,
     WidgetRef ref,
+    String entryId,
     Product product,
     ProductEntry productEntry,
     ProductVersion productVersion,

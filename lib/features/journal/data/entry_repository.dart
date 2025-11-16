@@ -148,6 +148,28 @@ class EntryRepository {
     await batch.commit();
   }
 
+  Future<void> ungroupEntry(String groupId) async {
+    final groupRef = _entriesRef.doc(groupId);
+
+    // 1. Get all children of this group
+    final childrenSnapshot = await _entriesRef
+        .where('parentRef', isEqualTo: groupRef)
+        .get();
+
+    final batch = _firestore.batch();
+
+    // 2. Set parentRef to null for all children
+    for (final childDoc in childrenSnapshot.docs) {
+      batch.update(childDoc.reference, {'parentRef': null});
+    }
+
+    // 3. Delete the group entry itself
+    batch.delete(groupRef);
+
+    // 4. Commit the atomic write
+    await batch.commit();
+  }
+
   Future<DocumentReference<Entry>> addEntry(Entry entry) async {
     return _entriesRef.add(entry);
   }

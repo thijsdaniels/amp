@@ -1,7 +1,8 @@
 import 'package:amp/core/models/document.dart';
+import 'package:amp/core/models/named_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Product extends Document {
+class Product extends Document with NamedItem {
   final String name;
   final int latestVersion;
 

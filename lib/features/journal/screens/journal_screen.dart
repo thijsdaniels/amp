@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/providers/selection_provider.dart';
 import 'package:amp/core/widgets/delete_selection_dialog.dart';
 import 'package:amp/core/widgets/selection_app_bar.dart';
 import 'package:amp/features/journal/providers/entries_by_day_provider.dart';
@@ -19,26 +20,43 @@ class JournalScreen extends ConsumerWidget {
     final selectedDate = ref.watch(selectedDateProvider);
     final entriesAsync = ref.watch(entriesByDayProvider(selectedDate));
 
+    final selectionState = ref.watch(selectionProvider);
+
     return Scaffold(
       appBar: SelectionAppBar(
         title: const Text('Journal'),
         selectionActions: [
           IconButton(
             icon: const Icon(Icons.group_work_outlined),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (context) => const GroupEntriesDialog(),
-            ),
+            onPressed: selectionState.selectedIds.length > 1
+                ? () => showDialog(
+                    context: context,
+                    builder: (context) => const GroupEntriesDialog(),
+                  )
+                : null,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (context) => DeleteSelectionDialog(
-                onDelete: (ids) =>
-                    ref.read(entryRepositoryProvider).deleteEntries(ids),
-              ),
-            ),
+            onPressed: () {
+              final selectedIds = selectionState.selectedIds.toList();
+              entriesAsync.whenData((entries) {
+                final selectedEntries = entries
+                    .where((entry) => selectedIds.contains(entry.id))
+                    .toList();
+                showDialog(
+                  context: context,
+                  builder: (context) => DeleteSelectionDialog(
+                    onDelete: (ids) async {
+                      await ref
+                          .read(entryRepositoryProvider)
+                          .deleteEntries(ids);
+                      ref.read(selectionProvider.notifier).clear();
+                    },
+                    items: selectedEntries,
+                  ),
+                );
+              });
+            },
           ),
         ],
       ),

@@ -1,11 +1,12 @@
 import 'package:amp/core/models/document.dart';
+import 'package:amp/core/models/named_item.dart';
 import 'package:amp/core/models/product_version.dart';
 import 'package:amp/core/models/recipe_version.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum EntryType { group, product, recipe }
 
-sealed class Entry extends Document {
+sealed class Entry extends Document with NamedItem {
   final Timestamp occurredAt;
   final DocumentReference<Entry>? parentRef;
   final EntryType type;
