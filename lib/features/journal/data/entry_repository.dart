@@ -49,6 +49,16 @@ class EntryRepository {
     await _entriesRef.doc(entryId).delete();
   }
 
+  Future<void> deleteEntries(List<String> entryIds) async {
+    if (entryIds.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final entryId in entryIds) {
+      batch.delete(_entriesRef.doc(entryId));
+    }
+    await batch.commit();
+  }
+
   Future<void> _updateEntry(Entry entry) async {
     if (entry.id == null) {
       throw ArgumentError('Entry must have an ID to be updated.');

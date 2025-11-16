@@ -65,4 +65,9 @@ class Product extends Document {
       throw const FormatException('Invalid snapshot data for Product');
     }
   }
+
+  /// Returns the route path to navigate to this product's detail screen.
+  String get routePath {
+    return '/products/$id';
+  }
 }

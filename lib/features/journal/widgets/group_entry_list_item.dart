@@ -1,38 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/mixins/selectable_item_mixin.dart';
 
-class GroupEntryListItem extends StatelessWidget {
+class GroupEntryListItem extends ConsumerWidget with SelectableItemMixin {
+  const GroupEntryListItem({super.key, required this.entry});
+
   final GroupEntry entry;
-  final bool isSelected;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onTap;
-  final VoidCallback? onToggleSelection;
-
-  const GroupEntryListItem({
-    super.key,
-    required this.entry,
-    this.isSelected = false,
-    this.onLongPress,
-    this.onTap,
-    this.onToggleSelection,
-  });
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.group_work),
-        title: Text(entry.name),
-        trailing: onToggleSelection != null
-            ? Checkbox(
-                value: isSelected,
-                onChanged: (_) => onToggleSelection?.call(),
-              )
-            : null,
-        onLongPress: onLongPress,
-        onTap: onToggleSelection ?? onTap,
-        selected: isSelected,
+  String get id => entry.id!;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      leading: const Icon(Icons.group_work_outlined),
+      selected: isSelected(ref),
+      onTap: () => handleTap(
+        ref: ref,
+        primaryAction: () => context.push(entry.routePath),
       ),
+      onLongPress: () => handleLongPress(ref: ref),
+      title: Text(entry.name),
     );
   }
 }

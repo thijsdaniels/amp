@@ -35,6 +35,8 @@ sealed class Entry extends Document {
     }
   }
 
+  String get routePath;
+
   Entry copyWith();
 }
 
@@ -111,6 +113,11 @@ class GroupEntry extends Entry {
       parentRef: parentRef ?? this.parentRef,
       name: name ?? this.name,
     );
+  }
+
+  @override
+  String get routePath {
+    return '/journal/group/$id';
   }
 }
 
@@ -216,6 +223,11 @@ class ProductEntry extends Entry {
       unit: unit ?? this.unit,
     );
   }
+
+  @override
+  String get routePath {
+    return '/journal/product/$id';
+  }
 }
 
 class RecipeEntry extends Entry {
@@ -319,5 +331,10 @@ class RecipeEntry extends Entry {
       quantity: quantity ?? this.quantity,
       unit: unit ?? this.unit,
     );
+  }
+
+  @override
+  String get routePath {
+    return '/journal/recipe/$id';
   }
 }

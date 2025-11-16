@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/mixins/selectable_item_mixin.dart';
 
-class RecipeEntryListItem extends StatelessWidget {
+class RecipeEntryListItem extends ConsumerWidget with SelectableItemMixin {
+  const RecipeEntryListItem({super.key, required this.entry});
+
   final RecipeEntry entry;
-  final bool isSelected;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onTap;
-  final VoidCallback? onToggleSelection;
-
-  const RecipeEntryListItem({
-    super.key,
-    required this.entry,
-    this.isSelected = false,
-    this.onLongPress,
-    this.onTap,
-    this.onToggleSelection,
-  });
 
   @override
-  Widget build(BuildContext context) {
+  String get id => entry.id!;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final subtitle = '${entry.quantity} ${entry.unit}';
 
     return Card(
@@ -26,15 +21,12 @@ class RecipeEntryListItem extends StatelessWidget {
         leading: const Icon(Icons.restaurant_menu),
         title: Text(entry.name),
         subtitle: Text(subtitle),
-        trailing: onToggleSelection != null
-            ? Checkbox(
-                value: isSelected,
-                onChanged: (_) => onToggleSelection?.call(),
-              )
-            : null,
-        onLongPress: onLongPress,
-        onTap: onToggleSelection ?? onTap,
-        selected: isSelected,
+        selected: isSelected(ref),
+        onTap: () => handleTap(
+          ref: ref,
+          primaryAction: () => context.push(entry.routePath),
+        ),
+        onLongPress: () => handleLongPress(ref: ref),
       ),
     );
   }

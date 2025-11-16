@@ -1,32 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/widgets/delete_selection_dialog.dart';
+import 'package:amp/core/widgets/selection_app_bar.dart';
 import 'package:amp/features/journal/providers/entries_by_day_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:amp/features/journal/providers/selected_date_provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
+import 'package:amp/features/journal/widgets/group_entries_dialog.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
 
-class JournalScreen extends ConsumerStatefulWidget {
+class JournalScreen extends ConsumerWidget {
   const JournalScreen({super.key});
 
   @override
-  ConsumerState<JournalScreen> createState() => _JournalScreenState();
-}
-
-class _JournalScreenState extends ConsumerState<JournalScreen> {
-  bool _isSelectionMode = false;
-  final Set<String> _selectedEntryIds = {};
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
     final entriesAsync = ref.watch(entriesByDayProvider(selectedDate));
 
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: SelectionAppBar(
+        title: const Text('Journal'),
+        selectionActions: [
+          IconButton(
+            icon: const Icon(Icons.group_work_outlined),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (context) => const GroupEntriesDialog(),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (context) => DeleteSelectionDialog(
+                onDelete: (ids) =>
+                    ref.read(entryRepositoryProvider).deleteEntries(ids),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: entriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) =>
@@ -51,36 +66,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             itemCount: entries.length,
             itemBuilder: (context, index) {
               final entry = entries[index];
-              final isSelected = _selectedEntryIds.contains(entry.id!);
-
               return switch (entry) {
-                ProductEntry() => ProductEntryListItem(
-                  entry: entry,
-                  isSelected: isSelected,
-                  onTap: () => _onListItemTapped(entry),
-                  onLongPress: () => _onLongPress(entry),
-                  onToggleSelection: _isSelectionMode
-                      ? () => _toggleSelection(entry)
-                      : null,
-                ),
-                RecipeEntry() => RecipeEntryListItem(
-                  entry: entry,
-                  isSelected: isSelected,
-                  onTap: () => _onListItemTapped(entry),
-                  onLongPress: () => _onLongPress(entry),
-                  onToggleSelection: _isSelectionMode
-                      ? () => _toggleSelection(entry)
-                      : null,
-                ),
-                GroupEntry() => GroupEntryListItem(
-                  entry: entry,
-                  isSelected: isSelected,
-                  onTap: () => _onListItemTapped(entry),
-                  onLongPress: () => _onLongPress(entry),
-                  onToggleSelection: _isSelectionMode
-                      ? () => _toggleSelection(entry)
-                      : null,
-                ),
+                ProductEntry() => ProductEntryListItem(entry: entry),
+                RecipeEntry() => RecipeEntryListItem(entry: entry),
+                GroupEntry() => GroupEntryListItem(entry: entry),
               };
             },
           );
@@ -94,190 +83,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           );
         },
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar() {
-    if (!_isSelectionMode) {
-      return AppBar(title: const Text('Journal'));
-    }
-
-    return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () {
-          setState(() {
-            _isSelectionMode = false;
-            _selectedEntryIds.clear();
-          });
-        },
-      ),
-      title: Text('${_selectedEntryIds.length} selected'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.group_work_outlined),
-          onPressed: () => _showGroupDialog(context),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline),
-          onPressed: () => _showDeleteDialog(context),
-        ),
-      ],
-    );
-  }
-
-  void _onLongPress(Entry entry) {
-    if (_isSelectionMode) return;
-    setState(() {
-      _isSelectionMode = true;
-      _selectedEntryIds.add(entry.id!);
-    });
-  }
-
-  void _onListItemTapped(Entry entry) {
-    switch (entry) {
-      case GroupEntry():
-        context.push('/journal/group/${entry.id}');
-        break;
-      case ProductEntry():
-        context.push('/journal/product/${entry.id}');
-        break;
-      case RecipeEntry():
-        context.push('/journal/recipe/${entry.id}');
-        break;
-    }
-  }
-
-  void _toggleSelection(Entry entry) {
-    setState(() {
-      if (_selectedEntryIds.contains(entry.id!)) {
-        _selectedEntryIds.remove(entry.id!);
-        if (_selectedEntryIds.isEmpty) {
-          _isSelectionMode = false;
-        }
-      } else {
-        _selectedEntryIds.add(entry.id!);
-      }
-    });
-  }
-
-  void _showGroupDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Name Your Group'),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'e.g., Breakfast'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a name';
-                }
-                return null;
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final groupName = nameController.text;
-                  try {
-                    await ref
-                        .read(entryRepositoryProvider)
-                        .groupEntries(_selectedEntryIds.toList(), groupName);
-
-                    setState(() {
-                      _selectedEntryIds.clear();
-                      _isSelectionMode = false;
-                    });
-
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error creating group: $e'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: const Text('Group'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete ${_selectedEntryIds.length} Entries?'),
-        content: const Text(
-          'Are you sure you want to delete the selected entries? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                final repo = ref.read(entryRepositoryProvider);
-                // Create a copy to avoid concurrent modification errors
-                final idsToDelete = List<String>.from(_selectedEntryIds);
-                for (final entryId in idsToDelete) {
-                  await repo.deleteEntry(entryId);
-                }
-
-                setState(() {
-                  _selectedEntryIds.clear();
-                  _isSelectionMode = false;
-                });
-
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${idsToDelete.length} entries deleted.'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error deleting entries: $e'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                );
-              }
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
       ),
     );
   }

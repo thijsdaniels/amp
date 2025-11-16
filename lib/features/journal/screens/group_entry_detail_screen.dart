@@ -6,7 +6,6 @@ import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 class GroupEntryDetailScreen extends ConsumerWidget {
   final String entryId;
@@ -43,18 +42,9 @@ class GroupEntryDetailScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final entry = children[index];
                   return switch (entry) {
-                    GroupEntry() => GroupEntryListItem(
-                      entry: entry,
-                      onTap: () => context.push('/journal/group/${entry.id}'),
-                    ),
-                    ProductEntry() => ProductEntryListItem(
-                      entry: entry,
-                      onTap: () => context.push('/journal/product/${entry.id}'),
-                    ),
-                    RecipeEntry() => RecipeEntryListItem(
-                      entry: entry,
-                      onTap: () => context.push('/journal/recipe/${entry.id}'),
-                    ),
+                    GroupEntry() => GroupEntryListItem(entry: entry),
+                    ProductEntry() => ProductEntryListItem(entry: entry),
+                    RecipeEntry() => RecipeEntryListItem(entry: entry),
                   };
                 },
               );

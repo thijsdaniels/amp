@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:amp/core/widgets/delete_selection_dialog.dart';
+import 'package:amp/core/widgets/selection_app_bar.dart';
+import 'package:amp/features/products/providers/product_repository_provider.dart';
 import 'package:amp/features/products/providers/products_stream_provider.dart';
+import 'package:amp/features/products/widgets/product_list_item.dart';
 
 class ProductsScreen extends ConsumerWidget {
   const ProductsScreen({super.key});
@@ -11,7 +15,21 @@ class ProductsScreen extends ConsumerWidget {
     final productsAsyncValue = ref.watch(productsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Products')),
+      appBar: SelectionAppBar(
+        title: const Text('Products'),
+        selectionActions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (context) => DeleteSelectionDialog(
+                onDelete: (ids) =>
+                    ref.read(productRepositoryProvider).deleteProducts(ids),
+              ),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           context.go('/products/add');
@@ -44,19 +62,7 @@ class ProductsScreen extends ConsumerWidget {
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: ListTile(
-                  title: Text(product.name),
-                  subtitle: Text(
-                    'Created: ${product.createdAt.toDate().toLocal().toString().split(' ')[0]}',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    context.go('/products/${product.id}');
-                  },
-                ),
-              );
+              return ProductListItem(product: product);
             },
           );
         },

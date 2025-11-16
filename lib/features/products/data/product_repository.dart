@@ -147,4 +147,18 @@ class ProductRepository {
   ) {
     return _productVersionsRef(productId).doc(productVersionId);
   }
+
+  Future<void> deleteProduct(String productId) async {
+    await _productsRef.doc(productId).delete();
+  }
+
+  Future<void> deleteProducts(List<String> productIds) async {
+    if (productIds.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final productId in productIds) {
+      batch.delete(_productsRef.doc(productId));
+    }
+    await batch.commit();
+  }
 }

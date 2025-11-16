@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // @todo Remove the test-user exception once real auth is implemented.
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId
+          || userId == 'test-user';
+    }
+    
+    match /users/{userId}/{path=**} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
+
