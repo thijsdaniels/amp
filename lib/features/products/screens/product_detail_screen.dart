@@ -49,6 +49,13 @@ class ProductDetailScreen extends ConsumerWidget {
                   'Version: ${productVersion.version}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (product.upc != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'UPC: ${product.upc}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: 24),
                 Text(
                   'Nutrition (per 100g)',

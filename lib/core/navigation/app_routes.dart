@@ -48,7 +48,11 @@ final List<RouteBase> appRoutes = [
         routes: [
           GoRoute(
             path: '/add',
-            builder: (context, state) => const AddProductScreen(),
+            builder: (context, state) {
+              // Extract UPC from query parameters if present
+              final upc = state.uri.queryParameters['upc'];
+              return AddProductScreen(prefilledUpc: upc);
+            },
           ),
           GoRoute(
             path: '/:productId',

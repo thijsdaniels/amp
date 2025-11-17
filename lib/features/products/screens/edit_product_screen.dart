@@ -9,6 +9,7 @@ import '../../../core/models/nutrition.dart';
 import '../../../core/models/product.dart';
 import '../../../core/models/product_version.dart';
 import '../../../core/models/unit.dart';
+import '../../../core/screens/barcode_scanner_screen.dart';
 import '../providers/product_repository_provider.dart';
 
 class EditProductScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       final formData = _formKey.currentState!.value;
 
       try {
+        // Extract UPC from form data, handling empty strings
+        final upcValue = formData['upc'] as String?;
+        final upc = upcValue?.trim().isEmpty == true ? null : upcValue?.trim();
+
         await productRepository.createNewProductVersion(
           productId: widget.productId,
           name: formData['name'],
@@ -41,6 +46,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             fat: double.parse(formData['fat']),
           ),
           units: formData['units'],
+          upc: upc,
         );
 
         ref.invalidate(productDetailsProvider(widget.productId));
@@ -124,6 +130,7 @@ class _EditProductForm extends StatelessWidget {
         key: formKey,
         initialValue: {
           'name': product.name,
+          'upc': product.upc ?? '',
           'calories': productVersion.nutrition.calories.toString(),
           'protein': productVersion.nutrition.protein.toString(),
           'carbs': productVersion.nutrition.carbohydrates.toString(),
@@ -144,6 +151,31 @@ class _EditProductForm extends StatelessWidget {
                 FormBuilderValidators.required(),
                 FormBuilderValidators.minLength(2),
               ]),
+            ),
+
+            const SizedBox(height: 16),
+
+            // UPC/Barcode
+            FormBuilderTextField(
+              name: 'upc',
+              decoration: InputDecoration(
+                labelText: 'UPC/Barcode (optional)',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: () async {
+                    final barcode = await Navigator.of(context).push<String>(
+                      MaterialPageRoute(
+                        builder: (context) => const BarcodeScannerScreen(),
+                      ),
+                    );
+                    if (barcode != null && formKey.currentState != null) {
+                      formKey.currentState!.fields['upc']?.didChange(barcode);
+                    }
+                  },
+                  tooltip: 'Scan Barcode',
+                ),
+              ),
             ),
 
             const SizedBox(height: 16),

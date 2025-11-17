@@ -35,6 +35,7 @@ class ProductRepository {
     required String name,
     required Nutrition nutrition,
     required List<Unit> units,
+    String? upc,
   }) async {
     final now = Timestamp.now();
     final batch = _firestore.batch();
@@ -60,6 +61,7 @@ class ProductRepository {
       createdAt: now,
       updatedAt: now,
       latestVersion: 1,
+      upc: upc,
     );
 
     // 4. Add both operations to the batch
@@ -75,6 +77,7 @@ class ProductRepository {
     required String name,
     required Nutrition nutrition,
     required List<Unit> units,
+    String? upc,
   }) async {
     final originalProduct = await getProduct(productId);
     final now = Timestamp.now();
@@ -84,6 +87,7 @@ class ProductRepository {
       name: name,
       latestVersion: newVersionNumber,
       updatedAt: now,
+      upc: upc,
     );
 
     final newVersion = ProductVersion(
@@ -138,6 +142,22 @@ class ProductRepository {
     return allProducts.where((product) {
       return product.name.toLowerCase().contains(queryLower);
     }).toList();
+  }
+
+  /// Finds a product by its UPC/EAN barcode.
+  ///
+  /// Returns the product if found, null otherwise.
+  Future<Product?> getProductByBarcode(String barcode) async {
+    final snapshot = await _productsRef
+        .where('upc', isEqualTo: barcode)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+
+    return snapshot.docs.first.data();
   }
 
   Future<Product> getProduct(String productId) async {

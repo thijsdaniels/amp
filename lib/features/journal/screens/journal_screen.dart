@@ -12,12 +12,21 @@ import 'package:amp/features/journal/widgets/group_entries_dialog.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
 import 'package:amp/features/journal/screens/product_search_screen.dart';
+import 'package:amp/features/journal/widgets/log_product_entry_dialog.dart';
+import 'package:amp/core/screens/barcode_scanner_screen.dart';
+import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:go_router/go_router.dart';
 
-class JournalScreen extends ConsumerWidget {
+class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends ConsumerState<JournalScreen> {
+  @override
+  Widget build(BuildContext context) {
     final selectedDate = ref.watch(selectedDateProvider);
     final entriesAsync = ref.watch(entriesByDayProvider(selectedDate));
 
@@ -96,14 +105,105 @@ class JournalScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const ProductSearchScreen(),
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.search),
+                    title: const Text('Search Products'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ProductSearchScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: const Text('Scan Barcode'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _handleBarcodeScan();
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void _handleBarcodeScan() async {
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => const BarcodeScannerScreen(),
+      ),
+    );
+
+    if (barcode == null || !mounted) return;
+
+    try {
+      final productRepository = ref.read(productRepositoryProvider);
+      final product = await productRepository.getProductByBarcode(barcode);
+
+      if (!mounted) return;
+
+      if (product != null) {
+        // Product found - show log dialog
+        final productVersion = await productRepository.getLatestProductVersion(
+          product.id!,
+        );
+        if (!mounted) return;
+        await LogProductEntryDialog.show(
+          context,
+          ref,
+          product,
+          productVersion,
+        );
+      } else {
+        // Product not found - offer to create it
+        if (!mounted) return;
+        final shouldCreate = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Product Not Found'),
+            content: Text(
+              'No product found with barcode "$barcode". Would you like to create it?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Create Product'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldCreate == true && mounted) {
+          // Navigate to product creation with UPC pre-filled
+          context.push('/products/add?upc=$barcode');
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 }
