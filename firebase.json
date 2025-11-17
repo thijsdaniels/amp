@@ -20,7 +20,7 @@
 				}
 			},
 			"dart": {
-				"lib/firebase_options.dart": {
+				"lib/core/config/firebase_config.dart": {
 					"projectId": "thijsdaniels-amp",
 					"configurations": {
 						"android": "1:492746394584:android:3171e4c767ecb7c38840ad",
