@@ -121,6 +121,25 @@ class ProductRepository {
     });
   }
 
+  Future<List<Product>> searchProducts(String query) async {
+    if (query.isEmpty) {
+      // Return all products if query is empty
+      final snapshot = await _productsRef.orderBy('name').get();
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    }
+
+    // Firestore doesn't support case-insensitive search natively,
+    // so we fetch all products and filter in memory
+    // For better performance with large datasets, consider using Algolia or similar
+    final snapshot = await _productsRef.orderBy('name').get();
+    final allProducts = snapshot.docs.map((doc) => doc.data()).toList();
+
+    final queryLower = query.toLowerCase();
+    return allProducts.where((product) {
+      return product.name.toLowerCase().contains(queryLower);
+    }).toList();
+  }
+
   Future<Product> getProduct(String productId) async {
     final doc = await _productsRef.doc(productId).get();
     return doc.data()!;

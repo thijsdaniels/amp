@@ -11,6 +11,7 @@ import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/group_entries_dialog.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
+import 'package:amp/features/journal/screens/product_search_screen.dart';
 
 class JournalScreen extends ConsumerWidget {
   const JournalScreen({super.key});
@@ -95,9 +96,10 @@ class JournalScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Quick add food entry
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Quick add food - coming soon!')),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ProductSearchScreen(),
+            ),
           );
         },
         child: const Icon(Icons.add),
