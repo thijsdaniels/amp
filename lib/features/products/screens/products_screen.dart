@@ -4,15 +4,24 @@ import 'package:go_router/go_router.dart';
 import 'package:amp/core/providers/selection_provider.dart';
 import 'package:amp/core/widgets/delete_selection_dialog.dart';
 import 'package:amp/core/widgets/selection_app_bar.dart';
+import 'package:amp/core/screens/barcode_scanner_screen.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';
 import 'package:amp/features/products/providers/products_stream_provider.dart';
+import 'package:amp/features/products/providers/open_food_facts_service_provider.dart';
+import 'package:amp/features/products/providers/prefilled_product_data_provider.dart';
+import 'package:amp/features/products/screens/open_food_facts_search_screen.dart';
 import 'package:amp/features/products/widgets/product_list_item.dart';
 
-class ProductsScreen extends ConsumerWidget {
+class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductsScreen> createState() => _ProductsScreenState();
+}
+
+class _ProductsScreenState extends ConsumerState<ProductsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final productsAsyncValue = ref.watch(productsStreamProvider);
 
     return Scaffold(
@@ -45,7 +54,44 @@ class ProductsScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.go('/products/add');
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    title: const Text('Add Product'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/products/add');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: const Text('Import by Barcode'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _handleImportByBarcode(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.search),
+                    title: const Text('Import by Search'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const OpenFoodFactsSearchScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
@@ -101,5 +147,51 @@ class ProductsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _handleImportByBarcode(BuildContext context) async {
+    final barcode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (context) => const BarcodeScannerScreen(),
+      ),
+    );
+
+    if (barcode == null || !context.mounted) return;
+
+    try {
+      final service = ref.read(openFoodFactsServiceProvider);
+      final productData = await service.getProductByBarcode(barcode);
+
+      if (!context.mounted) return;
+
+      if (productData != null) {
+        // Store prefilled data in provider
+        ref.read(prefilledProductDataProvider.notifier).state =
+            PrefilledProductData(
+          name: productData.name,
+          upc: productData.barcode,
+          nutrition: productData.nutrition,
+          units: productData.units,
+        );
+        // Navigate using go_router
+        context.push('/products/add');
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product not found in Open Food Facts for barcode: $barcode'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error searching Open Food Facts: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 }

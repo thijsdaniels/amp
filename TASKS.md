@@ -5,12 +5,12 @@
 - [x] Support editing products
 - [x] Fix bug in nutrition calculation on product entry detail screen: nutrition is multiplied by quantity, but that quantity may not be in grams (e.g. it might be "1 pieces"), in which case it still needs to be multiplied by the unit's weight in grams as well.
 - [x] Support updating product version on product entry detail screen
-- [ ] Check if we can refactor anything to improve code quality and sustainability
+- [x] Check if we can refactor anything to improve code quality and sustainability
 - [ ] Support editing product consumption entries
 - [ ] Replace products list with a search UI, likely using Algolia
 - [ ] Implement Recipe creation with product ingredients
 - [ ] Support using recipes as ingredients in other recipes
-- [ ] Implement Journal FAB to quickly log a product or recipe
+- [x] Implement Journal FAB to quickly log a product or recipe
 - [ ] Expand nutrition data to include vitamins and minerals
 - [ ] Add user auth and route guard
 - [ ] Add onboarding flow and route guard
@@ -28,8 +28,10 @@
 - [ ] Implement GoRouter errorBuilder for routing errors
 - [ ] Implement type-safe routing using `go_router_builder`
 - [ ] Create a `Weight` class to handle conversions from grams to other units (mg, μg) for display purposes, and use that class in the `Ingredient` model.
-- [ ] Show an totals overview of the journal entries for a given date
-- [ ] Support marking a day as "complete"
+- [ ] Show daily nutrition dashboard with the totals for the day progress towards the target calories and macros
+- [ ] Support marking a day as "complete" (because sometimes i only track half the things, and those days should probably be ignored for certain analyses)
+- [ ] remember last quantity used for a product and pre-fill it in the log product entry dialog (just like how i remember the last sets and reps for an exercise in vim)
+- [ ] support duplicating a journal entry, defaulting its date/time to now. makes it easy to log a recent entry again
 - [ ] Implement optional local notificaation reminder to mark a day as complete
 - [ ] Add USDA API as a products source
 - [ ] Support opting in and out of product sources
@@ -37,6 +39,8 @@
 - [ ] Graphs and trends for calories, macros, expenditure, etc.
 - [ ] Configurable target calories and macros for the day
 - [ ] Consider displaying an "outdated" flag on product entry list items, keeping in mind that this would require two additional queries for each list item
+- [ ] support turning a group entry into a recipe entry, creating a new recipe with the products as ingredients and the group entry name as the recipe name
+- [ ] support turning a consumption entry into a product entry, creating a new product with the consumption entry name as the product name
 
 ## Done
 

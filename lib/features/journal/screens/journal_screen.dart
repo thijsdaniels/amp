@@ -15,6 +15,8 @@ import 'package:amp/features/journal/screens/product_search_screen.dart';
 import 'package:amp/features/journal/widgets/log_product_entry_dialog.dart';
 import 'package:amp/core/screens/barcode_scanner_screen.dart';
 import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:amp/features/products/providers/open_food_facts_service_provider.dart';
+import 'package:amp/features/products/providers/prefilled_product_data_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class JournalScreen extends ConsumerStatefulWidget {
@@ -169,31 +171,72 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           productVersion,
         );
       } else {
-        // Product not found - offer to create it
-        if (!mounted) return;
-        final shouldCreate = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Product Not Found'),
-            content: Text(
-              'No product found with barcode "$barcode". Would you like to create it?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Create Product'),
-              ),
-            ],
-          ),
-        );
+        // Product not found in user's database - try Open Food Facts
+        final offService = ref.read(openFoodFactsServiceProvider);
+        final offProduct = await offService.getProductByBarcode(barcode);
 
-        if (shouldCreate == true && mounted) {
-          // Navigate to product creation with UPC pre-filled
-          context.push('/products/add?upc=$barcode');
+        if (!mounted) return;
+
+        if (offProduct != null) {
+          // Found in Open Food Facts - offer to import
+          final shouldImport = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Product Found in Open Food Facts'),
+              content: Text(
+                'Found "${offProduct.name}" in Open Food Facts. Would you like to import it?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Import'),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldImport == true && mounted) {
+            // Store prefilled data in provider
+            ref.read(prefilledProductDataProvider.notifier).state =
+                PrefilledProductData(
+              name: offProduct.name,
+              upc: offProduct.barcode,
+              nutrition: offProduct.nutrition,
+              units: offProduct.units,
+            );
+            // Navigate using go_router
+            context.push('/products/add');
+          }
+        } else {
+          // Not found anywhere - offer to create manually
+          final shouldCreate = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Product Not Found'),
+              content: Text(
+                'No product found with barcode "$barcode" in your database or Open Food Facts. Would you like to create it manually?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Create Product'),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldCreate == true && mounted) {
+            // Navigate to product creation with UPC pre-filled
+            context.push('/products/add?upc=$barcode');
+          }
         }
       }
     } catch (e) {

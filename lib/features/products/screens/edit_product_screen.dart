@@ -9,8 +9,9 @@ import '../../../core/models/nutrition.dart';
 import '../../../core/models/product.dart';
 import '../../../core/models/product_version.dart';
 import '../../../core/models/unit.dart';
-import '../../../core/screens/barcode_scanner_screen.dart';
 import '../providers/product_repository_provider.dart';
+import '../widgets/nutrition_form_fields.dart';
+import '../widgets/upc_field.dart';
 
 class EditProductScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -156,107 +157,12 @@ class _EditProductForm extends StatelessWidget {
             const SizedBox(height: 16),
 
             // UPC/Barcode
-            FormBuilderTextField(
-              name: 'upc',
-              decoration: InputDecoration(
-                labelText: 'UPC/Barcode (optional)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.qr_code_scanner),
-                  onPressed: () async {
-                    final barcode = await Navigator.of(context).push<String>(
-                      MaterialPageRoute(
-                        builder: (context) => const BarcodeScannerScreen(),
-                      ),
-                    );
-                    if (barcode != null && formKey.currentState != null) {
-                      formKey.currentState!.fields['upc']?.didChange(barcode);
-                    }
-                  },
-                  tooltip: 'Scan Barcode',
-                ),
-              ),
-            ),
+            UpcField(formKey: formKey),
 
             const SizedBox(height: 16),
 
             // Nutrition Section
-            const Text(
-              'Nutrition Information (per 100g)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Calories
-            FormBuilderTextField(
-              name: 'calories',
-              decoration: const InputDecoration(
-                labelText: 'Calories',
-                border: OutlineInputBorder(),
-                suffixText: 'kcal',
-              ),
-              keyboardType: TextInputType.number,
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(),
-                FormBuilderValidators.numeric(),
-                FormBuilderValidators.min(0),
-              ]),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Protein
-            FormBuilderTextField(
-              name: 'protein',
-              decoration: const InputDecoration(
-                labelText: 'Protein',
-                border: OutlineInputBorder(),
-                suffixText: 'g',
-              ),
-              keyboardType: TextInputType.number,
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(),
-                FormBuilderValidators.numeric(),
-                FormBuilderValidators.min(0),
-              ]),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Carbs
-            FormBuilderTextField(
-              name: 'carbs',
-              decoration: const InputDecoration(
-                labelText: 'Carbohydrates',
-                border: OutlineInputBorder(),
-                suffixText: 'g',
-              ),
-              keyboardType: TextInputType.number,
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(),
-                FormBuilderValidators.numeric(),
-                FormBuilderValidators.min(0),
-              ]),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Fat
-            FormBuilderTextField(
-              name: 'fat',
-              decoration: const InputDecoration(
-                labelText: 'Fat',
-                border: OutlineInputBorder(),
-                suffixText: 'g',
-              ),
-              keyboardType: TextInputType.number,
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(),
-                FormBuilderValidators.numeric(),
-                FormBuilderValidators.min(0),
-              ]),
-            ),
+            const NutritionFormFields(),
 
             const SizedBox(height: 24),
 

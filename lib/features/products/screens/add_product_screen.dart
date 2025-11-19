@@ -6,25 +6,55 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/models/nutrition.dart';
 import '../../../core/models/unit.dart';
-import '../../../core/screens/barcode_scanner_screen.dart';
 import '../data/product_repository.dart';
 import '../providers/product_repository_provider.dart';
+import '../providers/prefilled_product_data_provider.dart';
+import '../widgets/nutrition_form_fields.dart';
+import '../widgets/upc_field.dart';
 
 class AddProductScreen extends ConsumerStatefulWidget {
-  const AddProductScreen({super.key, this.prefilledUpc});
+  const AddProductScreen({
+    super.key,
+    this.prefilledUpc,
+    this.prefilledName,
+    this.prefilledNutrition,
+    this.prefilledUnits,
+  });
 
   final String? prefilledUpc;
+  final String? prefilledName;
+  final Nutrition? prefilledNutrition;
+  final List<Unit>? prefilledUnits;
 
   @override
   ConsumerState<AddProductScreen> createState() => _AddProductScreenState();
 }
 
 class _AddProductScreenState extends ConsumerState<AddProductScreen> {
+  PrefilledProductData? _cachedPrefilledData;
+  bool _hasReadPrefilledData = false;
 
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormBuilderState>();
     final productRepository = ref.watch(productRepositoryProvider);
+    
+    // Read prefilled data from provider once on first build
+    if (!_hasReadPrefilledData) {
+      final prefilledData = ref.read(prefilledProductDataProvider);
+      if (prefilledData != null) {
+        _cachedPrefilledData = prefilledData;
+        // Clear the provider after reading
+        ref.read(prefilledProductDataProvider.notifier).state = null;
+      }
+      _hasReadPrefilledData = true;
+    }
+    
+    // Use cached prefilled data if available, otherwise use widget parameters
+    final effectiveName = _cachedPrefilledData?.name ?? widget.prefilledName;
+    final effectiveUpc = _cachedPrefilledData?.upc ?? widget.prefilledUpc;
+    final effectiveNutrition = _cachedPrefilledData?.nutrition ?? widget.prefilledNutrition;
+    final effectiveUnits = _cachedPrefilledData?.units ?? widget.prefilledUnits;
 
     return Scaffold(
       appBar: AppBar(
@@ -40,6 +70,16 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: formKey,
+          initialValue: {
+            if (effectiveName != null) 'name': effectiveName,
+            if (effectiveNutrition != null) ...{
+              'calories': effectiveNutrition.calories.toString(),
+              'protein': effectiveNutrition.protein.toString(),
+              'carbs': effectiveNutrition.carbohydrates.toString(),
+              'fat': effectiveNutrition.fat.toString(),
+            },
+            if (effectiveUnits != null) 'units': effectiveUnits,
+          },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -59,108 +99,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 16),
 
               // UPC/Barcode
-              FormBuilderTextField(
-                name: 'upc',
-                initialValue: widget.prefilledUpc,
-                decoration: InputDecoration(
-                  labelText: 'UPC/Barcode (optional)',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.qr_code_scanner),
-                    onPressed: () async {
-                      final barcode = await Navigator.of(context).push<String>(
-                        MaterialPageRoute(
-                          builder: (context) => const BarcodeScannerScreen(),
-                        ),
-                      );
-                      if (barcode != null && formKey.currentState != null) {
-                        formKey.currentState!.fields['upc']?.didChange(barcode);
-                      }
-                    },
-                    tooltip: 'Scan Barcode',
-                  ),
-                ),
-              ),
+              UpcField(initialValue: effectiveUpc, formKey: formKey),
 
               const SizedBox(height: 16),
 
               // Nutrition Section
-              const Text(
-                'Nutrition Information (per 100g)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Calories
-              FormBuilderTextField(
-                name: 'calories',
-                decoration: const InputDecoration(
-                  labelText: 'Calories',
-                  border: OutlineInputBorder(),
-                  suffixText: 'kcal',
-                ),
-                keyboardType: TextInputType.number,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                  FormBuilderValidators.min(0),
-                ]),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Protein
-              FormBuilderTextField(
-                name: 'protein',
-                decoration: const InputDecoration(
-                  labelText: 'Protein',
-                  border: OutlineInputBorder(),
-                  suffixText: 'g',
-                ),
-                keyboardType: TextInputType.number,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                  FormBuilderValidators.min(0),
-                ]),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Carbs
-              FormBuilderTextField(
-                name: 'carbs',
-                decoration: const InputDecoration(
-                  labelText: 'Carbohydrates',
-                  border: OutlineInputBorder(),
-                  suffixText: 'g',
-                ),
-                keyboardType: TextInputType.number,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                  FormBuilderValidators.min(0),
-                ]),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Fat
-              FormBuilderTextField(
-                name: 'fat',
-                decoration: const InputDecoration(
-                  labelText: 'Fat',
-                  border: OutlineInputBorder(),
-                  suffixText: 'g',
-                ),
-                keyboardType: TextInputType.number,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.numeric(),
-                  FormBuilderValidators.min(0),
-                ]),
-              ),
+              const NutritionFormFields(),
 
               const SizedBox(height: 24),
 
@@ -175,7 +119,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               // Units List
               FormBuilderField<List<Unit>>(
                 name: 'units',
-                initialValue: const [],
+                initialValue: effectiveUnits ?? const [],
                 builder: (field) {
                   final units = field.value ?? [];
                   return Column(
@@ -318,4 +262,5 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       }
     }
   }
+
 }
