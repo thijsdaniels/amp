@@ -67,9 +67,7 @@ class _OpenFoodFactsSearchScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search Open Food Facts'),
-      ),
+      appBar: AppBar(title: const Text('Search Open Food Facts')),
       body: Column(
         children: [
           Padding(
@@ -98,9 +96,7 @@ class _OpenFoodFactsSearchScreenState
             ),
           ),
           if (_isSearching)
-            const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            )
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_searchResults.isEmpty && _searchController.text.isNotEmpty)
             Expanded(
               child: Center(
@@ -143,16 +139,18 @@ class _OpenFoodFactsSearchScreenState
                     child: ListTile(
                       leading: const Icon(Icons.inventory),
                       title: Text(productData.name),
-                      subtitle: productData.barcode != null
-                          ? Text('UPC: ${productData.barcode}')
+                      subtitle: productData.brand != null
+                          ? Text(productData.brand!)
                           : null,
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // Store prefilled data in provider
-                        ref.read(prefilledProductDataProvider.notifier).state =
-                            PrefilledProductData(
+                        ref
+                            .read(prefilledProductDataProvider.notifier)
+                            .state = PrefilledProductData(
                           name: productData.name,
                           upc: productData.barcode,
+                          brand: productData.brand,
                           nutrition: productData.nutrition,
                           units: productData.units,
                         );
@@ -169,5 +167,3 @@ class _OpenFoodFactsSearchScreenState
     );
   }
 }
-
-

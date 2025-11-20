@@ -7,12 +7,14 @@ import 'package:amp/core/models/unit.dart' as app_models;
 class OpenFoodFactsProductData {
   final String name;
   final String? barcode;
+  final String? brand;
   final Nutrition nutrition;
   final List<app_models.Unit> units;
 
   const OpenFoodFactsProductData({
     required this.name,
     this.barcode,
+    this.brand,
     required this.nutrition,
     required this.units,
   });
@@ -88,6 +90,9 @@ class OpenFoodFactsService {
     // Extract barcode
     final barcode = product.barcode;
 
+    // Extract brand
+    final brands = product.brands;
+
     // Extract nutrition (per 100g)
     final nutrition = _extractNutrition(product);
 
@@ -97,6 +102,7 @@ class OpenFoodFactsService {
     return OpenFoodFactsProductData(
       name: name,
       barcode: barcode,
+      brand: brands,
       nutrition: nutrition,
       units: units,
     );

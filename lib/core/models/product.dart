@@ -3,9 +3,11 @@ import 'package:amp/core/models/named_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Product extends Document with NamedItem {
+  @override
   final String name;
   final int latestVersion;
   final String? upc;
+  final String? brand;
 
   const Product({
     super.id,
@@ -15,6 +17,7 @@ class Product extends Document with NamedItem {
     required this.name,
     required this.latestVersion,
     this.upc,
+    this.brand,
   });
 
   @override
@@ -26,6 +29,7 @@ class Product extends Document with NamedItem {
       'name': name,
       'latestVersion': latestVersion,
       if (upc != null) 'upc': upc,
+      if (brand != null) 'brand': brand,
     };
   }
 
@@ -37,6 +41,7 @@ class Product extends Document with NamedItem {
     String? name,
     int? latestVersion,
     String? upc,
+    String? brand,
   }) {
     return Product(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class Product extends Document with NamedItem {
       name: name ?? this.name,
       latestVersion: latestVersion ?? this.latestVersion,
       upc: upc ?? this.upc,
+      brand: brand ?? this.brand,
     );
   }
 
@@ -61,6 +67,7 @@ class Product extends Document with NamedItem {
     }) {
       // Extract UPC if it exists, otherwise null
       final upc = data['upc'] as String?;
+      final brand = data['brand'] as String?;
 
       return Product(
         id: snapshot.id,
@@ -70,6 +77,7 @@ class Product extends Document with NamedItem {
         name: name,
         latestVersion: latestVersion,
         upc: upc,
+        brand: brand,
       );
     } else {
       throw const FormatException('Invalid snapshot data for Product');

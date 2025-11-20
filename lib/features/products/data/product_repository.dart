@@ -36,6 +36,7 @@ class ProductRepository {
     required Nutrition nutrition,
     required List<Unit> units,
     String? upc,
+    String? brand,
   }) async {
     final now = Timestamp.now();
     final batch = _firestore.batch();
@@ -62,6 +63,7 @@ class ProductRepository {
       updatedAt: now,
       latestVersion: 1,
       upc: upc,
+      brand: brand,
     );
 
     // 4. Add both operations to the batch
@@ -78,6 +80,7 @@ class ProductRepository {
     required Nutrition nutrition,
     required List<Unit> units,
     String? upc,
+    String? brand,
   }) async {
     final originalProduct = await getProduct(productId);
     final now = Timestamp.now();
@@ -88,6 +91,7 @@ class ProductRepository {
       latestVersion: newVersionNumber,
       updatedAt: now,
       upc: upc,
+      brand: brand,
     );
 
     final newVersion = ProductVersion(

@@ -42,6 +42,7 @@ sealed class Entry extends Document with NamedItem {
 }
 
 class GroupEntry extends Entry {
+  @override
   final String name;
 
   const GroupEntry({
@@ -124,6 +125,7 @@ class GroupEntry extends Entry {
 
 class ProductEntry extends Entry {
   final DocumentReference<ProductVersion> productVersionRef;
+  @override
   final String name;
   final double quantity;
   final String unit;
@@ -233,6 +235,7 @@ class ProductEntry extends Entry {
 
 class RecipeEntry extends Entry {
   final DocumentReference<RecipeVersion> recipeVersionRef;
+  @override
   final String name;
   final double quantity;
   final String unit;

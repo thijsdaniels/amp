@@ -24,6 +24,7 @@ class ProductListItem extends ConsumerWidget with SelectableItemMixin {
       child: ListTile(
         leading: const Icon(Icons.inventory),
         title: Text(product.name),
+        subtitle: product.brand != null ? Text(product.brand!) : null,
         trailing: isSelectionMode
             ? const Icon(Icons.chevron_right)
             : PopupMenuButton(

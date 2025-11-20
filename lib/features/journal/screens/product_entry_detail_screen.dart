@@ -44,8 +44,7 @@ class ProductEntryDetailScreen extends ConsumerWidget {
             error: (err, stack) => Center(child: Text('Error: $err')),
             data: (details) {
               final (product, productVersion) = details;
-              final isOutdated =
-                  product.latestVersion > productVersion.version;
+              final isOutdated = product.latestVersion > productVersion.version;
 
               final nutrition = productVersion.nutrition;
               Unit? unit = _getUnit(productEntry, productVersion);
@@ -92,7 +91,21 @@ class ProductEntryDetailScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Quantity: ${productEntry.quantity} ${unit.name}'),
+                          if (product.brand != null) ...[
+                            Text(
+                              product.brand!,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          Text(
+                            'Quantity: ${productEntry.quantity} ${unit.name}',
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Consumed Nutrition',

@@ -136,6 +136,9 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                     child: ListTile(
                       leading: const Icon(Icons.inventory),
                       title: Text(product.name),
+                      subtitle: product.brand != null
+                          ? Text(product.brand!)
+                          : null,
                       onTap: () async {
                         // Get the latest product version and show log dialog
                         try {

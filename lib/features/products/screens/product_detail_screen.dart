@@ -44,6 +44,15 @@ class ProductDetailScreen extends ConsumerWidget {
                   product.name,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
+                if (product.brand != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    product.brand!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Text(
                   'Version: ${productVersion.version}',

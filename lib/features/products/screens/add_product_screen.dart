@@ -32,28 +32,31 @@ class AddProductScreen extends ConsumerStatefulWidget {
 
 class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   PrefilledProductData? _cachedPrefilledData;
-  bool _hasReadPrefilledData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Read prefilled data from provider once on init
+    final prefilledData = ref.read(prefilledProductDataProvider);
+    if (prefilledData != null) {
+      _cachedPrefilledData = prefilledData;
+      // Clear the provider after reading to avoid stale data
+      Future.microtask(() {
+        ref.read(prefilledProductDataProvider.notifier).state = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormBuilderState>();
     final productRepository = ref.watch(productRepositoryProvider);
-    
-    // Read prefilled data from provider once on first build
-    if (!_hasReadPrefilledData) {
-      final prefilledData = ref.read(prefilledProductDataProvider);
-      if (prefilledData != null) {
-        _cachedPrefilledData = prefilledData;
-        // Clear the provider after reading
-        ref.read(prefilledProductDataProvider.notifier).state = null;
-      }
-      _hasReadPrefilledData = true;
-    }
-    
+
     // Use cached prefilled data if available, otherwise use widget parameters
     final effectiveName = _cachedPrefilledData?.name ?? widget.prefilledName;
     final effectiveUpc = _cachedPrefilledData?.upc ?? widget.prefilledUpc;
-    final effectiveNutrition = _cachedPrefilledData?.nutrition ?? widget.prefilledNutrition;
+    final effectiveNutrition =
+        _cachedPrefilledData?.nutrition ?? widget.prefilledNutrition;
     final effectiveUnits = _cachedPrefilledData?.units ?? widget.prefilledUnits;
 
     return Scaffold(
@@ -72,6 +75,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           key: formKey,
           initialValue: {
             if (effectiveName != null) 'name': effectiveName,
+            if (_cachedPrefilledData?.brand != null)
+              'brand': _cachedPrefilledData!.brand!,
             if (effectiveNutrition != null) ...{
               'calories': effectiveNutrition.calories.toString(),
               'protein': effectiveNutrition.protein.toString(),
@@ -94,6 +99,17 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   FormBuilderValidators.required(),
                   FormBuilderValidators.minLength(2),
                 ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Brand
+              FormBuilderTextField(
+                name: 'brand',
+                decoration: const InputDecoration(
+                  labelText: 'Brand Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
 
               const SizedBox(height: 16),
@@ -245,6 +261,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           nutrition: nutrition,
           units: formData['units'] as List<Unit>,
           upc: formData['upc'] as String?,
+          brand: formData['brand'] as String?,
         );
 
         if (context.mounted) {
@@ -262,5 +279,4 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       }
     }
   }
-
 }

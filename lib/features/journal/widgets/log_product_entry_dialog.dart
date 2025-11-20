@@ -139,7 +139,7 @@ class _LogProductEntryDialogState extends ConsumerState<LogProductEntryDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<Unit>(
-              value: _selectedUnit,
+              initialValue: _selectedUnit,
               items: _allUnits.map((Unit unit) {
                 return DropdownMenuItem<Unit>(
                   value: unit,

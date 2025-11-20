@@ -48,6 +48,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           ),
           units: formData['units'],
           upc: upc,
+          brand: formData['brand'] as String?,
         );
 
         ref.invalidate(productDetailsProvider(widget.productId));
@@ -131,6 +132,7 @@ class _EditProductForm extends StatelessWidget {
         key: formKey,
         initialValue: {
           'name': product.name,
+          'brand': product.brand ?? '',
           'upc': product.upc ?? '',
           'calories': productVersion.nutrition.calories.toString(),
           'protein': productVersion.nutrition.protein.toString(),
@@ -152,6 +154,17 @@ class _EditProductForm extends StatelessWidget {
                 FormBuilderValidators.required(),
                 FormBuilderValidators.minLength(2),
               ]),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Brand
+            FormBuilderTextField(
+              name: 'brand',
+              decoration: const InputDecoration(
+                labelText: 'Brand Name',
+                border: OutlineInputBorder(),
+              ),
             ),
 
             const SizedBox(height: 16),
