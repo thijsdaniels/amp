@@ -82,6 +82,85 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               'protein': effectiveNutrition.protein.toString(),
               'carbs': effectiveNutrition.carbohydrates.toString(),
               'fat': effectiveNutrition.fat.toString(),
+              if (effectiveNutrition.saturatedFat != null)
+                'saturatedFat': effectiveNutrition.saturatedFat.toString(),
+              if (effectiveNutrition.monounsaturatedFat != null)
+                'monounsaturatedFat': effectiveNutrition.monounsaturatedFat
+                    .toString(),
+              if (effectiveNutrition.polyunsaturatedFat != null)
+                'polyunsaturatedFat': effectiveNutrition.polyunsaturatedFat
+                    .toString(),
+              if (effectiveNutrition.transFat != null)
+                'transFat': effectiveNutrition.transFat.toString(),
+              if (effectiveNutrition.cholesterol != null)
+                'cholesterol': (effectiveNutrition.cholesterol! * 1000)
+                    .toString(),
+              if (effectiveNutrition.sodium != null)
+                'sodium': (effectiveNutrition.sodium! * 1000).toString(),
+              if (effectiveNutrition.salt != null)
+                'salt': effectiveNutrition.salt.toString(),
+              if (effectiveNutrition.fiber != null)
+                'fiber': effectiveNutrition.fiber.toString(),
+              if (effectiveNutrition.sugar != null)
+                'sugar': effectiveNutrition.sugar.toString(),
+              if (effectiveNutrition.addedSugar != null)
+                'addedSugar': effectiveNutrition.addedSugar.toString(),
+              if (effectiveNutrition.alcohol != null)
+                'alcohol': effectiveNutrition.alcohol.toString(),
+              if (effectiveNutrition.caffeine != null)
+                'caffeine': (effectiveNutrition.caffeine! * 1000).toString(),
+              if (effectiveNutrition.vitaminA != null)
+                'vitaminA': (effectiveNutrition.vitaminA! * 1000000).toString(),
+              if (effectiveNutrition.vitaminB1 != null)
+                'vitaminB1': (effectiveNutrition.vitaminB1! * 1000).toString(),
+              if (effectiveNutrition.vitaminB2 != null)
+                'vitaminB2': (effectiveNutrition.vitaminB2! * 1000).toString(),
+              if (effectiveNutrition.vitaminB3 != null)
+                'vitaminB3': (effectiveNutrition.vitaminB3! * 1000).toString(),
+              if (effectiveNutrition.vitaminB5 != null)
+                'vitaminB5': (effectiveNutrition.vitaminB5! * 1000).toString(),
+              if (effectiveNutrition.vitaminB6 != null)
+                'vitaminB6': (effectiveNutrition.vitaminB6! * 1000).toString(),
+              if (effectiveNutrition.vitaminB7 != null)
+                'vitaminB7': (effectiveNutrition.vitaminB7! * 1000000)
+                    .toString(),
+              if (effectiveNutrition.vitaminB9 != null)
+                'vitaminB9': (effectiveNutrition.vitaminB9! * 1000000)
+                    .toString(),
+              if (effectiveNutrition.vitaminB12 != null)
+                'vitaminB12': (effectiveNutrition.vitaminB12! * 1000000)
+                    .toString(),
+              if (effectiveNutrition.vitaminC != null)
+                'vitaminC': (effectiveNutrition.vitaminC! * 1000).toString(),
+              if (effectiveNutrition.vitaminD != null)
+                'vitaminD': (effectiveNutrition.vitaminD! * 1000000).toString(),
+              if (effectiveNutrition.vitaminE != null)
+                'vitaminE': (effectiveNutrition.vitaminE! * 1000).toString(),
+              if (effectiveNutrition.vitaminK != null)
+                'vitaminK': (effectiveNutrition.vitaminK! * 1000000).toString(),
+              if (effectiveNutrition.potassium != null)
+                'potassium': (effectiveNutrition.potassium! * 1000).toString(),
+              if (effectiveNutrition.calcium != null)
+                'calcium': (effectiveNutrition.calcium! * 1000).toString(),
+              if (effectiveNutrition.iron != null)
+                'iron': (effectiveNutrition.iron! * 1000).toString(),
+              if (effectiveNutrition.magnesium != null)
+                'magnesium': (effectiveNutrition.magnesium! * 1000).toString(),
+              if (effectiveNutrition.zinc != null)
+                'zinc': (effectiveNutrition.zinc! * 1000).toString(),
+              if (effectiveNutrition.copper != null)
+                'copper': (effectiveNutrition.copper! * 1000).toString(),
+              if (effectiveNutrition.manganese != null)
+                'manganese': (effectiveNutrition.manganese! * 1000).toString(),
+              if (effectiveNutrition.selenium != null)
+                'selenium': (effectiveNutrition.selenium! * 1000000).toString(),
+              if (effectiveNutrition.phosphorus != null)
+                'phosphorus': (effectiveNutrition.phosphorus! * 1000)
+                    .toString(),
+              if (effectiveNutrition.iodine != null)
+                'iodine': (effectiveNutrition.iodine! * 1000000).toString(),
+              if (effectiveNutrition.chloride != null)
+                'chloride': (effectiveNutrition.chloride! * 1000).toString(),
             },
             if (effectiveUnits != null) 'units': effectiveUnits,
           },
@@ -249,11 +328,55 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       final formData = formKey.currentState!.value;
 
       try {
+        double? parse(String key, {double scale = 1.0}) {
+          final value = formData[key];
+          if (value == null || value is! String || value.isEmpty) return null;
+          final parsed = double.tryParse(value);
+          if (parsed == null) return null;
+          return parsed / scale;
+        }
+
         final nutrition = Nutrition(
-          calories: double.parse(formData['calories'] as String),
-          protein: double.parse(formData['protein'] as String),
-          carbohydrates: double.parse(formData['carbs'] as String),
-          fat: double.parse(formData['fat'] as String),
+          calories: parse('calories') ?? 0,
+          protein: parse('protein') ?? 0,
+          carbohydrates: parse('carbs') ?? 0,
+          fat: parse('fat') ?? 0,
+          saturatedFat: parse('saturatedFat'),
+          monounsaturatedFat: parse('monounsaturatedFat'),
+          polyunsaturatedFat: parse('polyunsaturatedFat'),
+          transFat: parse('transFat'),
+          cholesterol: parse('cholesterol', scale: 1000),
+          sodium: parse('sodium', scale: 1000),
+          salt: parse('salt'),
+          fiber: parse('fiber'),
+          sugar: parse('sugar'),
+          addedSugar: parse('addedSugar'),
+          alcohol: parse('alcohol'),
+          caffeine: parse('caffeine', scale: 1000),
+          vitaminA: parse('vitaminA', scale: 1000000),
+          vitaminB1: parse('vitaminB1', scale: 1000),
+          vitaminB2: parse('vitaminB2', scale: 1000),
+          vitaminB3: parse('vitaminB3', scale: 1000),
+          vitaminB5: parse('vitaminB5', scale: 1000),
+          vitaminB6: parse('vitaminB6', scale: 1000),
+          vitaminB7: parse('vitaminB7', scale: 1000000),
+          vitaminB9: parse('vitaminB9', scale: 1000000),
+          vitaminB12: parse('vitaminB12', scale: 1000000),
+          vitaminC: parse('vitaminC', scale: 1000),
+          vitaminD: parse('vitaminD', scale: 1000000),
+          vitaminE: parse('vitaminE', scale: 1000),
+          vitaminK: parse('vitaminK', scale: 1000000),
+          potassium: parse('potassium', scale: 1000),
+          calcium: parse('calcium', scale: 1000),
+          iron: parse('iron', scale: 1000),
+          magnesium: parse('magnesium', scale: 1000),
+          zinc: parse('zinc', scale: 1000),
+          copper: parse('copper', scale: 1000),
+          manganese: parse('manganese', scale: 1000),
+          selenium: parse('selenium', scale: 1000000),
+          phosphorus: parse('phosphorus', scale: 1000),
+          iodine: parse('iodine', scale: 1000000),
+          chloride: parse('chloride', scale: 1000),
         );
 
         await productRepository.createProduct(

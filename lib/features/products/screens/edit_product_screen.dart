@@ -37,14 +37,58 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         final upcValue = formData['upc'] as String?;
         final upc = upcValue?.trim().isEmpty == true ? null : upcValue?.trim();
 
+        double? parse(String key, {double scale = 1.0}) {
+          final value = formData[key];
+          if (value == null || value is! String || value.isEmpty) return null;
+          final parsed = double.tryParse(value);
+          if (parsed == null) return null;
+          return parsed / scale;
+        }
+
         await productRepository.createNewProductVersion(
           productId: widget.productId,
           name: formData['name'],
           nutrition: Nutrition(
-            calories: double.parse(formData['calories']),
-            protein: double.parse(formData['protein']),
-            carbohydrates: double.parse(formData['carbs']),
-            fat: double.parse(formData['fat']),
+            calories: parse('calories') ?? 0,
+            protein: parse('protein') ?? 0,
+            carbohydrates: parse('carbs') ?? 0,
+            fat: parse('fat') ?? 0,
+            saturatedFat: parse('saturatedFat'),
+            monounsaturatedFat: parse('monounsaturatedFat'),
+            polyunsaturatedFat: parse('polyunsaturatedFat'),
+            transFat: parse('transFat'),
+            cholesterol: parse('cholesterol', scale: 1000),
+            sodium: parse('sodium', scale: 1000),
+            salt: parse('salt'),
+            fiber: parse('fiber'),
+            sugar: parse('sugar'),
+            addedSugar: parse('addedSugar'),
+            alcohol: parse('alcohol'),
+            caffeine: parse('caffeine', scale: 1000),
+            vitaminA: parse('vitaminA', scale: 1000000),
+            vitaminB1: parse('vitaminB1', scale: 1000),
+            vitaminB2: parse('vitaminB2', scale: 1000),
+            vitaminB3: parse('vitaminB3', scale: 1000),
+            vitaminB5: parse('vitaminB5', scale: 1000),
+            vitaminB6: parse('vitaminB6', scale: 1000),
+            vitaminB7: parse('vitaminB7', scale: 1000000),
+            vitaminB9: parse('vitaminB9', scale: 1000000),
+            vitaminB12: parse('vitaminB12', scale: 1000000),
+            vitaminC: parse('vitaminC', scale: 1000),
+            vitaminD: parse('vitaminD', scale: 1000000),
+            vitaminE: parse('vitaminE', scale: 1000),
+            vitaminK: parse('vitaminK', scale: 1000000),
+            potassium: parse('potassium', scale: 1000),
+            calcium: parse('calcium', scale: 1000),
+            iron: parse('iron', scale: 1000),
+            magnesium: parse('magnesium', scale: 1000),
+            zinc: parse('zinc', scale: 1000),
+            copper: parse('copper', scale: 1000),
+            manganese: parse('manganese', scale: 1000),
+            selenium: parse('selenium', scale: 1000000),
+            phosphorus: parse('phosphorus', scale: 1000),
+            iodine: parse('iodine', scale: 1000000),
+            chloride: parse('chloride', scale: 1000),
           ),
           units: formData['units'],
           upc: upc,
@@ -126,6 +170,7 @@ class _EditProductForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final n = productVersion.nutrition;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: FormBuilder(
@@ -134,10 +179,65 @@ class _EditProductForm extends StatelessWidget {
           'name': product.name,
           'brand': product.brand ?? '',
           'upc': product.upc ?? '',
-          'calories': productVersion.nutrition.calories.toString(),
-          'protein': productVersion.nutrition.protein.toString(),
-          'carbs': productVersion.nutrition.carbohydrates.toString(),
-          'fat': productVersion.nutrition.fat.toString(),
+          'calories': n.calories.toString(),
+          'protein': n.protein.toString(),
+          'carbs': n.carbohydrates.toString(),
+          'fat': n.fat.toString(),
+          if (n.saturatedFat != null) 'saturatedFat': n.saturatedFat.toString(),
+          if (n.monounsaturatedFat != null)
+            'monounsaturatedFat': n.monounsaturatedFat.toString(),
+          if (n.polyunsaturatedFat != null)
+            'polyunsaturatedFat': n.polyunsaturatedFat.toString(),
+          if (n.transFat != null) 'transFat': n.transFat.toString(),
+          if (n.cholesterol != null)
+            'cholesterol': (n.cholesterol! * 1000).toString(),
+          if (n.sodium != null) 'sodium': (n.sodium! * 1000).toString(),
+          if (n.salt != null) 'salt': n.salt.toString(),
+          if (n.fiber != null) 'fiber': n.fiber.toString(),
+          if (n.sugar != null) 'sugar': n.sugar.toString(),
+          if (n.addedSugar != null) 'addedSugar': n.addedSugar.toString(),
+          if (n.alcohol != null) 'alcohol': n.alcohol.toString(),
+          if (n.caffeine != null) 'caffeine': (n.caffeine! * 1000).toString(),
+          if (n.vitaminA != null)
+            'vitaminA': (n.vitaminA! * 1000000).toString(),
+          if (n.vitaminB1 != null)
+            'vitaminB1': (n.vitaminB1! * 1000).toString(),
+          if (n.vitaminB2 != null)
+            'vitaminB2': (n.vitaminB2! * 1000).toString(),
+          if (n.vitaminB3 != null)
+            'vitaminB3': (n.vitaminB3! * 1000).toString(),
+          if (n.vitaminB5 != null)
+            'vitaminB5': (n.vitaminB5! * 1000).toString(),
+          if (n.vitaminB6 != null)
+            'vitaminB6': (n.vitaminB6! * 1000).toString(),
+          if (n.vitaminB7 != null)
+            'vitaminB7': (n.vitaminB7! * 1000000).toString(),
+          if (n.vitaminB9 != null)
+            'vitaminB9': (n.vitaminB9! * 1000000).toString(),
+          if (n.vitaminB12 != null)
+            'vitaminB12': (n.vitaminB12! * 1000000).toString(),
+          if (n.vitaminC != null) 'vitaminC': (n.vitaminC! * 1000).toString(),
+          if (n.vitaminD != null)
+            'vitaminD': (n.vitaminD! * 1000000).toString(),
+          if (n.vitaminE != null) 'vitaminE': (n.vitaminE! * 1000).toString(),
+          if (n.vitaminK != null)
+            'vitaminK': (n.vitaminK! * 1000000).toString(),
+          if (n.potassium != null)
+            'potassium': (n.potassium! * 1000).toString(),
+          if (n.calcium != null) 'calcium': (n.calcium! * 1000).toString(),
+          if (n.iron != null) 'iron': (n.iron! * 1000).toString(),
+          if (n.magnesium != null)
+            'magnesium': (n.magnesium! * 1000).toString(),
+          if (n.zinc != null) 'zinc': (n.zinc! * 1000).toString(),
+          if (n.copper != null) 'copper': (n.copper! * 1000).toString(),
+          if (n.manganese != null)
+            'manganese': (n.manganese! * 1000).toString(),
+          if (n.selenium != null)
+            'selenium': (n.selenium! * 1000000).toString(),
+          if (n.phosphorus != null)
+            'phosphorus': (n.phosphorus! * 1000).toString(),
+          if (n.iodine != null) 'iodine': (n.iodine! * 1000000).toString(),
+          if (n.chloride != null) 'chloride': (n.chloride! * 1000).toString(),
           'units': productVersion.units,
         },
         child: Column(

@@ -1,3 +1,4 @@
+import 'package:amp/features/journal/widgets/nutrition_table.dart';
 import 'package:amp/features/products/providers/product_details_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,82 +36,62 @@ class ProductDetailScreen extends ConsumerWidget {
           final product = details.$1;
           final productVersion = details.$2;
 
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                if (product.brand != null) ...[
-                  const SizedBox(height: 4),
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    product.brand!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
+                    product.name,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  'Version: ${productVersion.version}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (product.upc != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'UPC: ${product.upc}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Text(
-                  'Nutrition (per 100g)',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Card(
-                  child: ListTile(
-                    title: const Text('Calories'),
-                    trailing: Text('${productVersion.nutrition.calories} kcal'),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: const Text('Protein'),
-                    trailing: Text('${productVersion.nutrition.protein} g'),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: const Text('Carbohydrates'),
-                    trailing: Text(
-                      '${productVersion.nutrition.carbohydrates} g',
-                    ),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: const Text('Fat'),
-                    trailing: Text('${productVersion.nutrition.fat} g'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                if (productVersion.units.isNotEmpty) ...[
-                  Text('Units', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  ...productVersion.units.map(
-                    (unit) => Card(
-                      child: ListTile(
-                        title: Text(unit.name),
-                        trailing: Text('${unit.grams} g'),
+                  if (product.brand != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      product.brand!,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                     ),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Version: ${productVersion.version}',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  if (product.upc != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'UPC: ${product.upc}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    'Nutrition (per 100g)',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  NutritionTable(nutrition: productVersion.nutrition),
+                  const SizedBox(height: 24),
+                  if (productVersion.units.isNotEmpty) ...[
+                    Text(
+                      'Units',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    ...productVersion.units.map(
+                      (unit) => Card(
+                        child: ListTile(
+                          title: Text(unit.name),
+                          trailing: Text('${unit.grams} g'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         },

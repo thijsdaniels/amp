@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,49 +21,59 @@ class _OpenFoodFactsSearchScreenState
   final _searchController = TextEditingController();
   List<OpenFoodFactsProductData> _searchResults = [];
   bool _isSearching = false;
+  Timer? _debounce;
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _performSearch(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-      return;
-    }
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    setState(() {
-      _isSearching = true;
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (query.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _searchResults = [];
+            _isSearching = false;
+          });
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _isSearching = true;
+        });
+      }
+
+      try {
+        final service = ref.read(openFoodFactsServiceProvider);
+        final results = await service.searchProducts(query);
+
+        if (mounted) {
+          setState(() {
+            _searchResults = results;
+            _isSearching = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSearching = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error searching Open Food Facts: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
     });
-
-    try {
-      final service = ref.read(openFoodFactsServiceProvider);
-      final results = await service.searchProducts(query);
-
-      if (mounted) {
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error searching Open Food Facts: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
   }
 
   @override

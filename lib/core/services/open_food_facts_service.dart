@@ -116,26 +116,58 @@ class OpenFoodFactsService {
       return const Nutrition(calories: 0, protein: 0, carbohydrates: 0, fat: 0);
     }
 
+    double? get(Nutrient nutrient) =>
+        nutriments.getValue(nutrient, PerSize.oneHundredGrams);
+
     // Get values per 100g
-    final calories =
-        nutriments.getValue(Nutrient.energyKCal, PerSize.oneHundredGrams) ??
-        0.0;
-
-    final protein =
-        nutriments.getValue(Nutrient.proteins, PerSize.oneHundredGrams) ?? 0.0;
-
-    final carbohydrates =
-        nutriments.getValue(Nutrient.carbohydrates, PerSize.oneHundredGrams) ??
-        0.0;
-
-    final fat =
-        nutriments.getValue(Nutrient.fat, PerSize.oneHundredGrams) ?? 0.0;
+    final calories = get(Nutrient.energyKCal) ?? 0.0;
+    final protein = get(Nutrient.proteins) ?? 0.0;
+    final carbohydrates = get(Nutrient.carbohydrates) ?? 0.0;
+    final fat = get(Nutrient.fat) ?? 0.0;
 
     return Nutrition(
       calories: calories,
       protein: protein,
       carbohydrates: carbohydrates,
       fat: fat,
+      saturatedFat: get(Nutrient.saturatedFat),
+      monounsaturatedFat: get(Nutrient.monounsaturatedFat),
+      polyunsaturatedFat: get(Nutrient.polyunsaturatedFat),
+      transFat: get(Nutrient.transFat),
+      cholesterol: get(Nutrient.cholesterol),
+      sodium: get(Nutrient.sodium),
+      salt: get(Nutrient.salt),
+      fiber: get(Nutrient.fiber),
+      sugar: get(Nutrient.sugars),
+      // addedSugars is sometimes not available directly, check package docs if needed
+      // but Nutrient.addedSugars exists in recent versions
+      addedSugar: get(Nutrient.addedSugars),
+      alcohol: get(Nutrient.alcohol),
+      caffeine: get(Nutrient.caffeine),
+      vitaminA: get(Nutrient.vitaminA),
+      vitaminB1: get(Nutrient.vitaminB1),
+      vitaminB2: get(Nutrient.vitaminB2),
+      vitaminB3: get(Nutrient.vitaminPP), // Niacin
+      vitaminB5: get(Nutrient.pantothenicAcid),
+      vitaminB6: get(Nutrient.vitaminB6),
+      vitaminB7: get(Nutrient.biotin),
+      vitaminB9: get(Nutrient.vitaminB9),
+      vitaminB12: get(Nutrient.vitaminB12),
+      vitaminC: get(Nutrient.vitaminC),
+      vitaminD: get(Nutrient.vitaminD),
+      vitaminE: get(Nutrient.vitaminE),
+      vitaminK: get(Nutrient.vitaminK),
+      potassium: get(Nutrient.potassium),
+      calcium: get(Nutrient.calcium),
+      iron: get(Nutrient.iron),
+      magnesium: get(Nutrient.magnesium),
+      zinc: get(Nutrient.zinc),
+      copper: get(Nutrient.copper),
+      manganese: get(Nutrient.manganese),
+      selenium: get(Nutrient.selenium),
+      phosphorus: get(Nutrient.phosphorus),
+      iodine: get(Nutrient.iodine),
+      chloride: get(Nutrient.chloride),
     );
   }
 
@@ -149,7 +181,7 @@ class OpenFoodFactsService {
       final servingSize = product.servingSize!;
       final quantity = _parseQuantity(servingSize);
       if (quantity != null) {
-        units.add(app_models.Unit(name: servingSize, grams: quantity));
+        units.add(app_models.Unit(name: 'Serving', grams: quantity));
       }
     }
 
@@ -157,14 +189,9 @@ class OpenFoodFactsService {
     if (product.quantity != null && product.quantity!.isNotEmpty) {
       final quantity = product.quantity!;
       final grams = _parseQuantity(quantity);
-      if (grams != null && !units.any((u) => u.name == quantity)) {
-        units.add(app_models.Unit(name: quantity, grams: grams));
+      if (grams != null) {
+        units.add(app_models.Unit(name: 'Container', grams: grams));
       }
-    }
-
-    // If no units found, add a default "piece" unit
-    if (units.isEmpty) {
-      units.add(const app_models.Unit(name: 'piece', grams: 100));
     }
 
     return units;
@@ -193,10 +220,12 @@ class OpenFoodFactsService {
     if (cleaned.contains('ml')) {
       // Assume 1ml ≈ 1g for liquids (approximation)
       return number;
-    } else if (cleaned.contains('g')) {
-      return number;
     } else if (cleaned.contains('kg')) {
       return number * 1000;
+    } else if (cleaned.contains('mg')) {
+      return number / 1000;
+    } else if (cleaned.contains('g')) {
+      return number;
     } else if (cleaned.contains('l')) {
       // Assume 1L ≈ 1000g for liquids (approximation)
       return number * 1000;
