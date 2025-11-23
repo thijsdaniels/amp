@@ -1,42 +1,46 @@
+import 'package:amp/core/models/consumable.dart';
 import 'package:amp/core/models/model.dart';
-import 'package:amp/core/models/product_version.dart';
+import 'package:amp/core/models/product.dart';
+import 'package:amp/core/models/recipe.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Ingredient extends Model {
-  final DocumentReference<ProductVersion> productVersionRef;
+  final DocumentReference<Consumable> itemRef;
   final double quantity;
   final String unit;
 
   const Ingredient({
-    required this.productVersionRef,
+    required this.itemRef,
     required this.quantity,
     required this.unit,
   });
 
   @override
   Map<String, dynamic> toMap() {
-    return {
-      'productVersionRef': productVersionRef,
-      'quantity': quantity,
-      'unit': unit,
-    };
+    return {'itemRef': itemRef, 'quantity': quantity, 'unit': unit};
   }
 
   factory Ingredient.fromMap(Map<String, dynamic> map) {
     if (map case {
-      'productVersionRef': DocumentReference productVersionRef,
+      'itemRef': DocumentReference rawRef,
       'quantity': num quantity,
       'unit': String unit,
     }) {
-      final typedProductVersionRef = productVersionRef
-          .withConverter<ProductVersion>(
-            fromFirestore: (snapshot, _) =>
-                ProductVersion.fromSnapshot(snapshot),
-            toFirestore: (productVersion, _) => productVersion.toMap(),
-          );
+      final typedRef = rawRef.withConverter<Consumable>(
+        fromFirestore: (snapshot, _) {
+          final path = snapshot.reference.path;
+          if (path.contains('/products/')) {
+            return Product.fromSnapshot(snapshot);
+          } else if (path.contains('/recipes/')) {
+            return Recipe.fromSnapshot(snapshot);
+          }
+          throw const FormatException('Unknown Consumable type');
+        },
+        toFirestore: (consumable, _) => consumable.toMap(),
+      );
 
       return Ingredient(
-        productVersionRef: typedProductVersionRef,
+        itemRef: typedRef,
         quantity: quantity.toDouble(),
         unit: unit,
       );

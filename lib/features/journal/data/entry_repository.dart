@@ -1,5 +1,10 @@
 import 'package:amp/core/models/entry.dart';
+import 'package:amp/core/models/ingredient.dart';
+import 'package:amp/core/models/product.dart';
 import 'package:amp/core/models/product_version.dart';
+import 'package:amp/core/models/recipe.dart';
+import 'package:amp/core/models/recipe_version.dart';
+import 'package:amp/features/recipes/data/recipe_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EntryRepository {
@@ -177,5 +182,165 @@ class EntryRepository {
   Future<Entry> getEntry(String entryId) async {
     final doc = await _entriesRef.doc(entryId).get();
     return doc.data()!;
+  }
+
+  /// Logs a recipe consumption, creating a recursive tree of entries.
+  Future<void> logRecipeEntry({
+    required Recipe recipe,
+    required RecipeVersion version,
+    required DateTime date,
+    required double servings,
+    required RecipeRepository recipeRepository,
+  }) async {
+    final now = Timestamp.now();
+    final occurredAt = Timestamp.fromDate(date);
+    final batch = _firestore.batch();
+
+    // 1. Create Root RecipeEntry
+    final rootEntryRef = _entriesRef.doc();
+    final rootEntry = RecipeEntry(
+      id: rootEntryRef.id,
+      createdBy: _uid,
+      createdAt: now,
+      updatedAt: now,
+      occurredAt: occurredAt,
+      recipeVersionRef: FirebaseFirestore.instance
+          .collection('recipes')
+          .doc(recipe.id)
+          .collection('versions')
+          .doc(version.id)
+          .withConverter(
+            fromFirestore: (s, _) => RecipeVersion.fromSnapshot(s),
+            toFirestore: (v, _) => v.toMap(),
+          ),
+      quantity: servings,
+      unit: 'servings',
+      name: recipe.name,
+    );
+    batch.set(rootEntryRef, rootEntry);
+
+    // 2. Recursively log ingredients
+    // Calculate scale factor: how much of the recipe yield are we consuming?
+    // If recipe yields 4 servings and we eat 2, scale is 0.5.
+    // If recipe yields 0 (undefined), assume 1.
+    final scaleFactor = version.servings > 0
+        ? servings / version.servings
+        : 1.0;
+
+    await _logIngredients(
+      batch: batch,
+      ingredients: version.ingredients,
+      parentRef: rootEntryRef,
+      occurredAt: occurredAt,
+      scaleFactor: scaleFactor,
+      recipeRepository: recipeRepository,
+      now: now,
+    );
+
+    await batch.commit();
+  }
+
+  Future<void> _logIngredients({
+    required WriteBatch batch,
+    required List<Ingredient> ingredients,
+    required DocumentReference<Entry> parentRef,
+    required Timestamp occurredAt,
+    required double scaleFactor,
+    required RecipeRepository recipeRepository,
+    required Timestamp now,
+  }) async {
+    for (final ingredient in ingredients) {
+      final itemDoc = await ingredient.itemRef.get();
+      final item = itemDoc.data();
+
+      if (item is Product) {
+        // Fetch latest product version
+        final productVersionSnapshot = await itemDoc.reference
+            .collection('versions')
+            .where('version', isEqualTo: item.latestVersion)
+            .limit(1)
+            .withConverter<ProductVersion>(
+              fromFirestore: (s, _) => ProductVersion.fromSnapshot(s),
+              toFirestore: (v, _) => v.toMap(),
+            )
+            .get();
+
+        if (productVersionSnapshot.docs.isEmpty) continue;
+        final productVersionRef = productVersionSnapshot.docs.first.reference;
+
+        // Calculate scaled quantity
+        final quantity = ingredient.quantity * scaleFactor;
+
+        final entryRef = _entriesRef.doc();
+        final entry = ProductEntry(
+          id: entryRef.id,
+          createdBy: _uid,
+          createdAt: now,
+          updatedAt: now,
+          occurredAt: occurredAt,
+          productVersionRef: productVersionRef,
+          quantity: quantity,
+          unit: ingredient.unit,
+          name: item.name,
+          parentRef: parentRef,
+        );
+        batch.set(entryRef, entry);
+      } else if (item is Recipe) {
+        // Fetch latest recipe version
+        final subRecipeVersion = await recipeRepository.getLatestRecipeVersion(
+          item.id!,
+        );
+        if (subRecipeVersion == null) continue;
+
+        // Calculate scaled servings for the sub-recipe
+        double subServings;
+        if (ingredient.unit.toLowerCase() == 'serving' ||
+            ingredient.unit.toLowerCase() == 'servings') {
+          // If ingredient is defined in servings, we just scale the servings
+          subServings = ingredient.quantity * scaleFactor;
+        } else {
+          // Fallback: treat as servings for now or 1.0.
+          subServings = ingredient.quantity * scaleFactor;
+        }
+
+        final entryRef = _entriesRef.doc();
+        final entry = RecipeEntry(
+          id: entryRef.id,
+          createdBy: _uid,
+          createdAt: now,
+          updatedAt: now,
+          occurredAt: occurredAt,
+          recipeVersionRef: FirebaseFirestore.instance
+              .collection('recipes')
+              .doc(item.id)
+              .collection('versions')
+              .doc(subRecipeVersion.id)
+              .withConverter(
+                fromFirestore: (s, _) => RecipeVersion.fromSnapshot(s),
+                toFirestore: (v, _) => v.toMap(),
+              ),
+          quantity: subServings,
+          unit: 'servings',
+          name: item.name,
+          parentRef: parentRef,
+        );
+        batch.set(entryRef, entry);
+
+        // Recurse
+        final subScaleFactor = subRecipeVersion.servings > 0
+            ? subServings / subRecipeVersion.servings
+            : 1.0;
+
+        await _logIngredients(
+          batch: batch,
+          ingredients: subRecipeVersion.ingredients,
+          parentRef: entryRef,
+          occurredAt: occurredAt,
+          scaleFactor: subScaleFactor,
+          recipeRepository: recipeRepository,
+          now: now,
+        );
+      }
+    }
   }
 }

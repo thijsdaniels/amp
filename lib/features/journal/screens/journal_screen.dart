@@ -1,22 +1,24 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:amp/core/models/entry.dart';
 import 'package:amp/core/providers/selection_provider.dart';
+import 'package:amp/core/screens/barcode_scanner_screen.dart';
 import 'package:amp/core/widgets/delete_selection_dialog.dart';
 import 'package:amp/core/widgets/selection_app_bar.dart';
 import 'package:amp/features/journal/providers/entries_by_day_provider.dart';
 import 'package:amp/features/journal/providers/entry_repository_provider.dart';
 import 'package:amp/features/journal/providers/selected_date_provider.dart';
-import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
+import 'package:amp/features/journal/screens/product_search_screen.dart';
 import 'package:amp/features/journal/widgets/group_entries_dialog.dart';
+import 'package:amp/features/journal/widgets/group_entry_list_item.dart';
+import 'package:amp/features/journal/widgets/log_product_entry_dialog.dart';
 import 'package:amp/features/journal/widgets/product_entry_list_item.dart';
 import 'package:amp/features/journal/widgets/recipe_entry_list_item.dart';
-import 'package:amp/features/journal/screens/product_search_screen.dart';
-import 'package:amp/features/journal/widgets/log_product_entry_dialog.dart';
-import 'package:amp/core/screens/barcode_scanner_screen.dart';
-import 'package:amp/features/products/providers/product_repository_provider.dart';
 import 'package:amp/features/products/providers/open_food_facts_service_provider.dart';
 import 'package:amp/features/products/providers/prefilled_product_data_provider.dart';
+import 'package:amp/features/products/providers/product_repository_provider.dart';
+import 'package:amp/features/recipes/providers/recipe_repository_provider.dart';
+import 'package:amp/features/recipes/screens/recipe_list_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class JournalScreen extends ConsumerStatefulWidget {
@@ -133,6 +135,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       _handleBarcodeScan();
                     },
                   ),
+                  ListTile(
+                    leading: const Icon(Icons.restaurant_menu),
+                    title: const Text('Log Recipe'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _handleLogRecipe();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -143,11 +153,77 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     );
   }
 
+  void _handleLogRecipe() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => RecipeListScreen(
+          onSelect: (recipe) async {
+            Navigator.of(context).pop(); // Close list screen
+
+            // Fetch latest version
+            final version = await ref
+                .read(recipeRepositoryProvider)
+                .getLatestRecipeVersion(recipe.id!);
+            if (version == null) return; // Error handling
+
+            if (!mounted) return;
+
+            // Show dialog for servings
+            _showLogRecipeDialog(recipe, version);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showLogRecipeDialog(dynamic recipe, dynamic version) {
+    final servingsController = TextEditingController(text: '1');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Log ${recipe.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: servingsController,
+              decoration: const InputDecoration(labelText: 'Servings'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final servings = double.tryParse(servingsController.text);
+              if (servings != null) {
+                ref
+                    .read(entryRepositoryProvider)
+                    .logRecipeEntry(
+                      recipe: recipe,
+                      version: version,
+                      date: ref.read(selectedDateProvider),
+                      servings: servings,
+                      recipeRepository: ref.read(recipeRepositoryProvider),
+                    );
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Log'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleBarcodeScan() async {
     final barcode = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (context) => const BarcodeScannerScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
     );
 
     if (barcode == null || !mounted) return;
@@ -164,12 +240,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           product.id!,
         );
         if (!mounted) return;
-        await LogProductEntryDialog.show(
-          context,
-          ref,
-          product,
-          productVersion,
-        );
+        await LogProductEntryDialog.show(context, ref, product, productVersion);
       } else {
         // Product not found in user's database - try Open Food Facts
         final offService = ref.read(openFoodFactsServiceProvider);
@@ -201,8 +272,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
           if (shouldImport == true && mounted) {
             // Store prefilled data in provider
-            ref.read(prefilledProductDataProvider.notifier).state =
-                PrefilledProductData(
+            ref
+                .read(prefilledProductDataProvider.notifier)
+                .state = PrefilledProductData(
               name: offProduct.name,
               upc: offProduct.barcode,
               nutrition: offProduct.nutrition,

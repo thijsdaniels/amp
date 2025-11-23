@@ -50,3 +50,6 @@ app.*.map.json
 
 # Environment variables
 env.json
+
+# Tickets
+tickets

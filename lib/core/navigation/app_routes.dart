@@ -6,6 +6,9 @@ import 'package:amp/features/products/screens/add_product_screen.dart';
 import 'package:amp/features/products/screens/edit_product_screen.dart';
 import 'package:amp/features/products/screens/product_detail_screen.dart';
 import 'package:amp/features/products/screens/products_screen.dart';
+import 'package:amp/features/recipes/screens/add_recipe_screen.dart';
+import 'package:amp/features/recipes/screens/recipe_detail_screen.dart';
+import 'package:amp/features/recipes/screens/recipe_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -69,6 +72,23 @@ final List<RouteBase> appRoutes = [
                 },
               ),
             ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/recipes',
+        builder: (context, state) => const RecipeListScreen(),
+        routes: [
+          GoRoute(
+            path: 'add',
+            builder: (context, state) => const AddRecipeScreen(),
+          ),
+          GoRoute(
+            path: ':recipeId',
+            builder: (context, state) {
+              final recipeId = state.pathParameters['recipeId']!;
+              return RecipeDetailScreen(recipeId: recipeId);
+            },
           ),
         ],
       ),

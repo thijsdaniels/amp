@@ -129,6 +129,13 @@ class ProductRepository {
     });
   }
 
+  Future<List<Product>> getProducts() async {
+    final snapshot = await _productsRef
+        .orderBy('updatedAt', descending: true)
+        .get();
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
   Future<List<Product>> searchProducts(String query) async {
     if (query.isEmpty) {
       // Return all products if query is empty
@@ -189,6 +196,10 @@ class ProductRepository {
     String productVersionId,
   ) {
     return _productVersionsRef(productId).doc(productVersionId);
+  }
+
+  DocumentReference<Product> getProductReference(String productId) {
+    return _productsRef.doc(productId);
   }
 
   Future<void> deleteProduct(String productId) async {

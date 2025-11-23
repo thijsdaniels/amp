@@ -1,11 +1,8 @@
-import 'package:amp/core/models/document.dart';
+import 'package:amp/core/models/consumable.dart';
 import 'package:amp/core/models/named_item.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Product extends Document with NamedItem {
-  @override
-  final String name;
-  final int latestVersion;
+class Product extends Consumable with NamedItem {
   final String? upc;
   final String? brand;
 
@@ -14,8 +11,8 @@ class Product extends Document with NamedItem {
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
-    required this.name,
-    required this.latestVersion,
+    required super.name,
+    required super.latestVersion,
     this.upc,
     this.brand,
   });

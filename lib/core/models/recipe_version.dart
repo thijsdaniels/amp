@@ -1,12 +1,11 @@
 import 'package:amp/core/models/document.dart';
 import 'package:amp/core/models/ingredient.dart';
-import 'package:amp/core/models/nutrition.dart';
 import 'package:amp/core/models/unit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RecipeVersion extends Document {
   final int version;
-  final Nutrition nutrition;
+  final double servings;
   final List<Unit> units;
   final List<Ingredient> ingredients;
 
@@ -16,7 +15,7 @@ class RecipeVersion extends Document {
     required super.createdAt,
     required super.updatedAt,
     required this.version,
-    required this.nutrition,
+    required this.servings,
     required this.units,
     required this.ingredients,
   });
@@ -28,7 +27,7 @@ class RecipeVersion extends Document {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'version': version,
-      'nutrition': nutrition.toMap(),
+      'servings': servings,
       'units': units.map((unit) => unit.toMap()).toList(),
       'ingredients': ingredients.map((e) => e.toMap()).toList(),
     };
@@ -41,7 +40,6 @@ class RecipeVersion extends Document {
       'createdAt': Timestamp createdAt,
       'updatedAt': Timestamp updatedAt,
       'version': int version,
-      'nutrition': Map<String, dynamic> nutritionMap,
       'units': List<dynamic> unitsList,
       'ingredients': List<dynamic> ingredientsList,
     }) {
@@ -51,7 +49,7 @@ class RecipeVersion extends Document {
         createdAt: createdAt,
         updatedAt: updatedAt,
         version: version,
-        nutrition: Nutrition.fromMap(nutritionMap),
+        servings: (data['servings'] as num?)?.toDouble() ?? 1.0,
         units: unitsList
             .map((unitMap) => Unit.fromMap(unitMap as Map<String, dynamic>))
             .toList(),

@@ -1,17 +1,14 @@
-import 'package:amp/core/models/document.dart';
+import 'package:amp/core/models/consumable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Recipe extends Document {
-  final String name;
-  final int latestVersion;
-
+class Recipe extends Consumable {
   const Recipe({
     super.id,
     required super.createdBy,
     required super.createdAt,
     required super.updatedAt,
-    required this.name,
-    required this.latestVersion,
+    required super.name,
+    required super.latestVersion,
   });
 
   @override

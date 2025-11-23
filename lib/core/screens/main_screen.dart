@@ -21,6 +21,10 @@ class MainScreen extends StatelessWidget {
             icon: Icon(Icons.inventory),
             label: 'Products',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.restaurant_menu),
+            label: 'Recipes',
+          ),
         ],
       ),
     );
@@ -31,6 +35,8 @@ class MainScreen extends StatelessWidget {
       return 0;
     } else if (location.startsWith('/products')) {
       return 1;
+    } else if (location.startsWith('/recipes')) {
+      return 2;
     }
     return 0; // Default to journal
   }
@@ -42,6 +48,9 @@ class MainScreen extends StatelessWidget {
         break;
       case 1:
         context.go('/products');
+        break;
+      case 2:
+        context.go('/recipes');
         break;
     }
   }
