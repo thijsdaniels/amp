@@ -2,6 +2,7 @@ import 'package:amp/core/screens/main_screen.dart';
 import 'package:amp/features/journal/screens/group_entry_detail_screen.dart';
 import 'package:amp/features/journal/screens/journal_screen.dart';
 import 'package:amp/features/journal/screens/product_entry_detail_screen.dart';
+import 'package:amp/features/journal/screens/recipe_entry_detail_screen.dart';
 import 'package:amp/features/products/screens/add_product_screen.dart';
 import 'package:amp/features/products/screens/edit_product_screen.dart';
 import 'package:amp/features/products/screens/product_detail_screen.dart';
@@ -36,13 +37,13 @@ final List<RouteBase> appRoutes = [
               return ProductEntryDetailScreen(entryId: entryId);
             },
           ),
-          // GoRoute(
-          //   path: '/recipe/:entryId',
-          //   builder: (context, state) {
-          //     final entryId = state.pathParameters['entryId']!;
-          //     return RecipeEntryDetailScreen(entryId: entryId);
-          //   },
-          // ),
+          GoRoute(
+            path: '/recipe/:entryId',
+            builder: (context, state) {
+              final entryId = state.pathParameters['entryId']!;
+              return RecipeEntryDetailScreen(entryId: entryId);
+            },
+          ),
         ],
       ),
       GoRoute(

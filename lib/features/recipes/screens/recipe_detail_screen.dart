@@ -1,4 +1,6 @@
+import 'package:amp/core/models/ingredient.dart';
 import 'package:amp/core/models/product.dart';
+import 'package:amp/core/models/product_version.dart';
 import 'package:amp/core/models/recipe.dart';
 import 'package:amp/features/recipes/providers/recipe_details_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -53,28 +55,7 @@ class RecipeDetailScreen extends ConsumerWidget {
                   itemCount: version.ingredients.length,
                   itemBuilder: (context, index) {
                     final ingredient = version.ingredients[index];
-                    return FutureBuilder<DocumentSnapshot>(
-                      future: ingredient.itemRef.get(),
-                      builder: (context, itemSnapshot) {
-                        if (!itemSnapshot.hasData) {
-                          return const ListTile(title: Text('Loading...'));
-                        }
-                        final itemData = itemSnapshot.data!.data();
-                        String name = 'Unknown Item';
-                        if (itemData is Product) {
-                          name = itemData.name;
-                        } else if (itemData is Recipe) {
-                          name = itemData.name;
-                        }
-
-                        return ListTile(
-                          title: Text(name),
-                          subtitle: Text(
-                            '${ingredient.quantity} ${ingredient.unit}',
-                          ),
-                        );
-                      },
-                    );
+                    return IngredientListItem(ingredient: ingredient);
                   },
                 ),
               ],
@@ -82,6 +63,68 @@ class RecipeDetailScreen extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class IngredientListItem extends StatelessWidget {
+  final Ingredient ingredient;
+
+  const IngredientListItem({super.key, required this.ingredient});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: ingredient.itemRef.get(),
+      builder: (context, itemSnapshot) {
+        if (!itemSnapshot.hasData) {
+          return const ListTile(title: Text('Loading...'));
+        }
+        final itemData = itemSnapshot.data!.data();
+
+        if (itemData is Product) {
+          return FutureBuilder<DocumentSnapshot>(
+            future: ingredient.itemRef
+                .collection('product_versions')
+                .doc(itemData.latestVersion.toString())
+                .withConverter<ProductVersion>(
+                  fromFirestore: (s, _) => ProductVersion.fromSnapshot(s),
+                  toFirestore: (v, _) => v.toMap(),
+                )
+                .get(),
+            builder: (context, versionSnapshot) {
+              if (!versionSnapshot.hasData) {
+                return ListTile(
+                  title: Text(itemData.name),
+                  subtitle: const Text('Loading details...'),
+                );
+              }
+              final version = versionSnapshot.data!.data() as ProductVersion?;
+              if (version == null) {
+                return ListTile(
+                  title: Text(itemData.name),
+                  subtitle: Text('${ingredient.quantity.toStringAsFixed(1)}g'),
+                );
+              }
+
+              final resolved = version.resolveBestUnit(ingredient.quantity);
+              return ListTile(
+                title: Text(itemData.name),
+                subtitle: Text(
+                  '${resolved.quantity.toStringAsFixed(2)} ${resolved.unit}',
+                ),
+              );
+            },
+          );
+        } else if (itemData is Recipe) {
+          return ListTile(
+            title: Text(itemData.name),
+            subtitle: Text('${ingredient.quantity.toStringAsFixed(1)}g'),
+          );
+        }
+
+        return const ListTile(title: Text('Unknown Item'));
+      },
     );
   }
 }

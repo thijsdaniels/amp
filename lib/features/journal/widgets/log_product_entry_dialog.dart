@@ -66,6 +66,7 @@ class _LogProductEntryDialogState extends ConsumerState<LogProductEntryDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final quantity = double.parse(_quantityController.text);
+    final grams = quantity * _selectedUnit!.grams;
     final uid = ref.read(uidProvider);
     final now = Timestamp.now();
 
@@ -78,8 +79,7 @@ class _LogProductEntryDialogState extends ConsumerState<LogProductEntryDialog> {
           .read(productRepositoryProvider)
           .getProductVersionRef(widget.product.id!, widget.productVersion.id!),
       name: widget.product.name,
-      quantity: quantity,
-      unit: _selectedUnit!.name,
+      quantity: grams,
     );
 
     try {

@@ -93,20 +93,12 @@ class EntryRepository {
     await _updateEntry(updatedEntry);
   }
 
-  Future<void> updateProductEntryWithNewUnit(
+  Future<void> updateProductEntryQuantity(
     String entryId,
-    String newName,
-    DocumentReference<ProductVersion> newVersionRef,
-    String newUnit,
     double newQuantity,
   ) async {
     final originalEntry = await getEntry(entryId) as ProductEntry;
-    final updatedEntry = originalEntry.copyWith(
-      name: newName,
-      productVersionRef: newVersionRef,
-      unit: newUnit,
-      quantity: newQuantity,
-    );
+    final updatedEntry = originalEntry.copyWith(quantity: newQuantity);
     await _updateEntry(updatedEntry);
   }
 
@@ -196,6 +188,17 @@ class EntryRepository {
     final occurredAt = Timestamp.fromDate(date);
     final batch = _firestore.batch();
 
+    // Calculate total weight of the recipe version to convert servings to grams
+    double totalRecipeWeight = 0.0;
+    for (final ingredient in version.ingredients) {
+      totalRecipeWeight += ingredient.quantity;
+    }
+
+    // If recipe has no weight (empty), avoid division by zero
+    final gramsConsumed = (version.servings > 0 && totalRecipeWeight > 0)
+        ? (servings / version.servings) * totalRecipeWeight
+        : 0.0;
+
     // 1. Create Root RecipeEntry
     final rootEntryRef = _entriesRef.doc();
     final rootEntry = RecipeEntry(
@@ -204,28 +207,26 @@ class EntryRepository {
       createdAt: now,
       updatedAt: now,
       occurredAt: occurredAt,
-      recipeVersionRef: FirebaseFirestore.instance
+      recipeVersionRef: _firestore
+          .collection('users')
+          .doc(_uid)
           .collection('recipes')
           .doc(recipe.id)
-          .collection('versions')
+          .collection('recipe_versions')
           .doc(version.id)
           .withConverter(
             fromFirestore: (s, _) => RecipeVersion.fromSnapshot(s),
             toFirestore: (v, _) => v.toMap(),
           ),
-      quantity: servings,
-      unit: 'servings',
+      quantity: gramsConsumed,
       name: recipe.name,
     );
     batch.set(rootEntryRef, rootEntry);
 
-    // 2. Recursively log ingredients
-    // Calculate scale factor: how much of the recipe yield are we consuming?
-    // If recipe yields 4 servings and we eat 2, scale is 0.5.
-    // If recipe yields 0 (undefined), assume 1.
-    final scaleFactor = version.servings > 0
-        ? servings / version.servings
-        : 1.0;
+    // Calculate scale factor: portion of the total weight consumed
+    final scaleFactor = totalRecipeWeight > 0
+        ? gramsConsumed / totalRecipeWeight
+        : 0.0;
 
     await _logIngredients(
       batch: batch,
@@ -255,20 +256,19 @@ class EntryRepository {
 
       if (item is Product) {
         // Fetch latest product version
+        // Optimization: Use version number as ID
         final productVersionSnapshot = await itemDoc.reference
-            .collection('versions')
-            .where('version', isEqualTo: item.latestVersion)
-            .limit(1)
+            .collection('product_versions')
+            .doc(item.latestVersion.toString())
             .withConverter<ProductVersion>(
               fromFirestore: (s, _) => ProductVersion.fromSnapshot(s),
               toFirestore: (v, _) => v.toMap(),
             )
             .get();
 
-        if (productVersionSnapshot.docs.isEmpty) continue;
-        final productVersionRef = productVersionSnapshot.docs.first.reference;
+        final productVersionRef = productVersionSnapshot.reference;
 
-        // Calculate scaled quantity
+        // Calculate scaled quantity (grams)
         final quantity = ingredient.quantity * scaleFactor;
 
         final entryRef = _entriesRef.doc();
@@ -280,7 +280,6 @@ class EntryRepository {
           occurredAt: occurredAt,
           productVersionRef: productVersionRef,
           quantity: quantity,
-          unit: ingredient.unit,
           name: item.name,
           parentRef: parentRef,
         );
@@ -292,16 +291,9 @@ class EntryRepository {
         );
         if (subRecipeVersion == null) continue;
 
-        // Calculate scaled servings for the sub-recipe
-        double subServings;
-        if (ingredient.unit.toLowerCase() == 'serving' ||
-            ingredient.unit.toLowerCase() == 'servings') {
-          // If ingredient is defined in servings, we just scale the servings
-          subServings = ingredient.quantity * scaleFactor;
-        } else {
-          // Fallback: treat as servings for now or 1.0.
-          subServings = ingredient.quantity * scaleFactor;
-        }
+        // Calculate scaled quantity (grams) for the sub-recipe
+        // ingredient.quantity is already grams of the sub-recipe
+        final subRecipeGrams = ingredient.quantity * scaleFactor;
 
         final entryRef = _entriesRef.doc();
         final entry = RecipeEntry(
@@ -310,26 +302,33 @@ class EntryRepository {
           createdAt: now,
           updatedAt: now,
           occurredAt: occurredAt,
-          recipeVersionRef: FirebaseFirestore.instance
+          recipeVersionRef: _firestore
+              .collection('users')
+              .doc(_uid)
               .collection('recipes')
               .doc(item.id)
-              .collection('versions')
+              .collection('recipe_versions')
               .doc(subRecipeVersion.id)
               .withConverter(
                 fromFirestore: (s, _) => RecipeVersion.fromSnapshot(s),
                 toFirestore: (v, _) => v.toMap(),
               ),
-          quantity: subServings,
-          unit: 'servings',
+          quantity: subRecipeGrams,
           name: item.name,
           parentRef: parentRef,
         );
         batch.set(entryRef, entry);
 
         // Recurse
-        final subScaleFactor = subRecipeVersion.servings > 0
-            ? subServings / subRecipeVersion.servings
-            : 1.0;
+        // We need to know the total weight of the sub-recipe to calculate its scale factor
+        double subRecipeTotalWeight = 0.0;
+        for (final subIng in subRecipeVersion.ingredients) {
+          subRecipeTotalWeight += subIng.quantity;
+        }
+
+        final subScaleFactor = subRecipeTotalWeight > 0
+            ? subRecipeGrams / subRecipeTotalWeight
+            : 0.0;
 
         await _logIngredients(
           batch: batch,

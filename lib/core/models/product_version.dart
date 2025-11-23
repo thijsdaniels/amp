@@ -56,4 +56,57 @@ class ProductVersion extends Document {
       throw const FormatException('Invalid snapshot data for ProductVersion');
     }
   }
+
+  /// Resolves the best unit to display for a given amount in grams.
+  ///
+  /// Returns a record containing the [quantity] in the resolved unit and the [unit] name.
+  /// If no suitable unit is found (or if grams match the default unit), returns grams.
+  ({double quantity, String unit}) resolveBestUnit(double grams) {
+    if (units.isEmpty) {
+      return (quantity: grams, unit: 'g');
+    }
+
+    // 1. Calculate the count for each unit
+    final candidates = units.map((u) {
+      final count = grams / u.grams;
+      return (unit: u, count: count);
+    }).toList();
+
+    // 2. Score candidates
+    // We prefer:
+    // - Integers (or close to integers)
+    // - Reasonable magnitudes (e.g. 0.5 to 100)
+
+    // Simple heuristic: Find the one closest to a "nice" number
+    // For now, let's just pick the one that results in the value closest to 1,
+    // but preferring values >= 1.
+
+    // Actually, the user's example was "2 Large Eggs" (120g) vs "2.4 Medium Eggs" (50g).
+    // If we have 120g, and units are Large (60g) and Medium (50g).
+    // Large -> 2.0
+    // Medium -> 2.4
+    // 2.0 is "nicer".
+
+    var bestCandidate = candidates.first;
+    double bestScore = double.infinity;
+
+    for (final candidate in candidates) {
+      final count = candidate.count;
+
+      // Score based on distance to nearest integer
+      final distanceToInt = (count - count.round()).abs();
+
+      // Penalty for very small numbers (e.g. 0.05 cups)
+      final magnitudePenalty = (count < 0.1) ? 100.0 : 0.0;
+
+      final score = distanceToInt + magnitudePenalty;
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+    }
+
+    return (quantity: bestCandidate.count, unit: bestCandidate.unit.name);
+  }
 }

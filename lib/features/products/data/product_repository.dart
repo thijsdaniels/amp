@@ -68,7 +68,7 @@ class ProductRepository {
 
     // 4. Add both operations to the batch
     batch.set(productRef, product);
-    batch.set(_productVersionsRef(productRef.id).doc(), initialVersion);
+    batch.set(_productVersionsRef(productRef.id).doc('1'), initialVersion);
 
     // 5. Commit the batch
     await batch.commit();
@@ -115,7 +115,9 @@ class ProductRepository {
     final batch = _firestore.batch();
 
     final productRef = _productsRef.doc(product.id);
-    final versionRef = _productVersionsRef(product.id!).doc();
+    final versionRef = _productVersionsRef(
+      product.id!,
+    ).doc(version.version.toString());
 
     batch.update(productRef, product.toMap());
     batch.set(versionRef, version);

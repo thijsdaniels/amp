@@ -7,24 +7,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Ingredient extends Model {
   final DocumentReference<Consumable> itemRef;
   final double quantity;
-  final String unit;
 
-  const Ingredient({
-    required this.itemRef,
-    required this.quantity,
-    required this.unit,
-  });
+  const Ingredient({required this.itemRef, required this.quantity});
 
   @override
   Map<String, dynamic> toMap() {
-    return {'itemRef': itemRef, 'quantity': quantity, 'unit': unit};
+    return {'itemRef': itemRef, 'quantity': quantity};
   }
 
   factory Ingredient.fromMap(Map<String, dynamic> map) {
     if (map case {
       'itemRef': DocumentReference rawRef,
       'quantity': num quantity,
-      'unit': String unit,
     }) {
       final typedRef = rawRef.withConverter<Consumable>(
         fromFirestore: (snapshot, _) {
@@ -39,11 +33,7 @@ class Ingredient extends Model {
         toFirestore: (consumable, _) => consumable.toMap(),
       );
 
-      return Ingredient(
-        itemRef: typedRef,
-        quantity: quantity.toDouble(),
-        unit: unit,
-      );
+      return Ingredient(itemRef: typedRef, quantity: quantity.toDouble());
     } else {
       throw const FormatException('Invalid JSON format for Ingredient');
     }

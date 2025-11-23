@@ -128,7 +128,6 @@ class ProductEntry extends Entry {
   @override
   final String name;
   final double quantity;
-  final String unit;
 
   const ProductEntry({
     super.id,
@@ -140,7 +139,6 @@ class ProductEntry extends Entry {
     required this.productVersionRef,
     required this.name,
     required this.quantity,
-    required this.unit,
   }) : super(type: EntryType.product);
 
   @override
@@ -155,7 +153,6 @@ class ProductEntry extends Entry {
       'productVersionRef': productVersionRef,
       'name': name,
       'quantity': quantity,
-      'unit': unit,
     };
   }
 
@@ -168,7 +165,6 @@ class ProductEntry extends Entry {
       'productVersionRef': DocumentReference productVersionRef,
       'name': String name,
       'quantity': num quantity,
-      'unit': String unit,
     }) {
       final rawParentRef = map['parentRef'] as DocumentReference?;
       final typedParentRef = rawParentRef?.withConverter<Entry>(
@@ -193,7 +189,6 @@ class ProductEntry extends Entry {
         productVersionRef: typedProductVersionRef,
         name: name,
         quantity: quantity.toDouble(),
-        unit: unit,
       );
     } else {
       throw const FormatException('Invalid JSON format for ProductEntry');
@@ -211,7 +206,6 @@ class ProductEntry extends Entry {
     DocumentReference<ProductVersion>? productVersionRef,
     String? name,
     double? quantity,
-    String? unit,
   }) {
     return ProductEntry(
       id: id ?? this.id,
@@ -223,7 +217,6 @@ class ProductEntry extends Entry {
       productVersionRef: productVersionRef ?? this.productVersionRef,
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
-      unit: unit ?? this.unit,
     );
   }
 
@@ -238,7 +231,6 @@ class RecipeEntry extends Entry {
   @override
   final String name;
   final double quantity;
-  final String unit;
 
   const RecipeEntry({
     super.id,
@@ -250,7 +242,6 @@ class RecipeEntry extends Entry {
     required this.recipeVersionRef,
     required this.name,
     required this.quantity,
-    required this.unit,
   }) : super(type: EntryType.recipe);
 
   @override
@@ -265,7 +256,6 @@ class RecipeEntry extends Entry {
       'recipeVersionRef': recipeVersionRef,
       'name': name,
       'quantity': quantity,
-      'unit': unit,
     };
   }
 
@@ -278,7 +268,6 @@ class RecipeEntry extends Entry {
       'recipeVersionRef': DocumentReference recipeVersionRef,
       'name': String name,
       'quantity': num quantity,
-      'unit': String unit,
     }) {
       final rawParentRef = map['parentRef'] as DocumentReference?;
       final typedParentRef = rawParentRef?.withConverter<Entry>(
@@ -303,7 +292,6 @@ class RecipeEntry extends Entry {
         recipeVersionRef: typedRecipeVersionRef,
         name: name,
         quantity: quantity.toDouble(),
-        unit: unit,
       );
     } else {
       throw const FormatException('Invalid JSON format for RecipeEntry');
@@ -321,7 +309,6 @@ class RecipeEntry extends Entry {
     DocumentReference<RecipeVersion>? recipeVersionRef,
     String? name,
     double? quantity,
-    String? unit,
   }) {
     return RecipeEntry(
       id: id ?? this.id,
@@ -333,7 +320,6 @@ class RecipeEntry extends Entry {
       recipeVersionRef: recipeVersionRef ?? this.recipeVersionRef,
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
-      unit: unit ?? this.unit,
     );
   }
 

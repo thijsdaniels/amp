@@ -4,7 +4,6 @@ import 'package:amp/core/models/product.dart';
 import 'package:amp/core/models/product_version.dart';
 import 'package:amp/core/models/recipe.dart';
 import 'package:amp/core/models/recipe_version.dart';
-import 'package:amp/core/models/unit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RecipeRepository {
@@ -27,7 +26,7 @@ class RecipeRepository {
   CollectionReference<RecipeVersion> _versionsRef(String recipeId) =>
       _recipesRef
           .doc(recipeId)
-          .collection('versions')
+          .collection('recipe_versions')
           .withConverter<RecipeVersion>(
             fromFirestore: (snapshot, _) =>
                 RecipeVersion.fromSnapshot(snapshot),
@@ -95,10 +94,14 @@ class RecipeRepository {
 
       if (item is Product) {
         // Fetch the latest version of the product to get nutrition
+        // Optimization: Use the version number as ID if possible, but for now we query
+        // because we haven't migrated ProductRepository yet.
+        // Wait, we are doing a fresh start, so we CAN assume the new ID structure.
+        // But we need to know the version number. Product has `latestVersion`.
+
         final productVersionSnapshot = await itemDoc.reference
-            .collection('versions')
-            .where('version', isEqualTo: item.latestVersion)
-            .limit(1)
+            .collection('product_versions')
+            .doc(item.latestVersion.toString()) // direct access optimization
             .withConverter<ProductVersion>(
               fromFirestore: (snapshot, _) =>
                   ProductVersion.fromSnapshot(snapshot),
@@ -106,15 +109,12 @@ class RecipeRepository {
             )
             .get();
 
-        if (productVersionSnapshot.docs.isEmpty) continue;
-        final productVersion = productVersionSnapshot.docs.first.data();
+        final productVersion = productVersionSnapshot.data();
+        if (productVersion == null) continue;
 
         // Calculate nutrition for this ingredient
-        final ratio = _calculateRatio(
-          ingredient.quantity,
-          ingredient.unit,
-          productVersion.units,
-        );
+        // quantity is in grams. Nutrition is per 100g.
+        final ratio = ingredient.quantity / 100.0;
         totalNutrition += productVersion.nutrition * ratio;
       } else if (item is Recipe) {
         final recipeId = item.id!;
@@ -125,64 +125,26 @@ class RecipeRepository {
         final subRecipeVersion = await getLatestRecipeVersion(recipeId);
         if (subRecipeVersion == null) continue;
 
-        // Recurse
+        // Recurse to get total nutrition of the sub-recipe
         final subNutrition = await calculateNutrition(
           subRecipeVersion,
           visitedRecipeIds: {...currentVisited, recipeId},
         );
 
-        double scale = 1.0;
-
-        // Let's try to support "serving" unit.
-        if (ingredient.unit.toLowerCase() == 'serving' ||
-            ingredient.unit.toLowerCase() == 'servings') {
-          // Use the recipe's yield (servings) to calculate per-serving nutrition
-          // subNutrition is TOTAL for the recipe.
-          // Per serving = subNutrition / subRecipeVersion.servings
-          // Total for ingredient = Per serving * ingredient.quantity
-
-          if (subRecipeVersion.servings > 0) {
-            scale = ingredient.quantity / subRecipeVersion.servings;
-          } else {
-            scale = ingredient.quantity; // Fallback
-          }
-        } else {
-          // If unit is not 'serving', we assume it's a fraction of the whole recipe
-          // e.g. 0.5 of the whole recipe.
-          scale = ingredient.quantity;
+        // Calculate total weight of the sub-recipe to determine the ratio
+        double subRecipeTotalWeight = 0.0;
+        for (final subIngredient in subRecipeVersion.ingredients) {
+          subRecipeTotalWeight += subIngredient.quantity;
         }
 
-        totalNutrition += subNutrition * scale;
+        if (subRecipeTotalWeight > 0) {
+          final scale = ingredient.quantity / subRecipeTotalWeight;
+          totalNutrition += subNutrition * scale;
+        }
       }
     }
 
     return totalNutrition;
-  }
-
-  double _calculateRatio(
-    double quantity,
-    String unit,
-    List<Unit> availableUnits,
-  ) {
-    // 1. Find the unit definition
-    final unitDef = availableUnits.firstWhere(
-      (u) => u.name.toLowerCase() == unit.toLowerCase(),
-      orElse: () => const Unit(name: 'unknown', grams: 0),
-    );
-
-    if (unitDef.grams > 0) {
-      // Convert everything to grams
-      // Nutrition is stored per 100g
-      final totalGrams = quantity * unitDef.grams;
-      return totalGrams / 100.0;
-    } else if (unit.toLowerCase() == 'g' ||
-        unit.toLowerCase() == 'gram' ||
-        unit.toLowerCase() == 'grams') {
-      return quantity / 100.0;
-    }
-
-    // Fallback/Error
-    return 0.0;
   }
 
   Future<void> createRecipe({
